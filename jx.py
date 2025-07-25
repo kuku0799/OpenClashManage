@@ -232,7 +232,12 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 host, port = parsed.hostname, parsed.port or 1080
                 username = parsed.username or ""
                 password = parsed.password or ""
+                query = parse_qs(parsed.query)
                 name = clean_name(extract_custom_name(line), existing_names)
+                
+                # 验证必要参数
+                if not host or not port:
+                    raise ValueError("SOCKS5服务器地址或端口缺失")
                 
                 node = {
                     "name": name,
@@ -240,11 +245,22 @@ def parse_nodes(file_path: str) -> List[Dict]:
                     "server": host,
                     "port": int(port)
                 }
+                
+                # 添加认证信息
                 if username and password:
                     node.update({
                         "username": username,
                         "password": password
                     })
+                
+                # 添加可选参数
+                if query.get("timeout"):
+                    node["timeout"] = int(query["timeout"][0])
+                if query.get("udp"):
+                    node["udp"] = query["udp"][0].lower() == "true"
+                if query.get("tfo"):
+                    node["tfo"] = query["tfo"][0].lower() == "true"
+                
                 parsed_nodes.append(node)
                 success_count += 1
 
