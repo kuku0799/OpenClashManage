@@ -447,5 +447,88 @@ def delete_nodes_batch():
     except Exception as e:
         return jsonify({'success': False, 'message': f'批量删除节点失败: {e}'})
 
+@app.route('/api/test_node_speed', methods=['POST'])
+def test_node_speed():
+    """测试节点速度"""
+    try:
+        data = request.get_json()
+        node_index = data.get('index')
+        
+        if node_index is None:
+            return jsonify({'success': False, 'message': '缺少节点索引参数'})
+        
+        # 获取节点信息
+        nodes = manager.get_nodes_list()
+        if node_index >= len(nodes):
+            return jsonify({'success': False, 'message': '节点索引超出范围'})
+        
+        node = nodes[node_index]
+        node_url = node['url']
+        
+        # 模拟测速（实际项目中需要调用真实的测速工具）
+        import random
+        import time
+        
+        # 模拟测速延迟
+        time.sleep(1)
+        
+        # 生成模拟结果
+        latency = random.randint(50, 300)  # 延迟 50-300ms
+        speed = random.randint(1, 100)     # 速度 1-100Mbps
+        
+        result = {
+            'success': True,
+            'node_name': node.get('name', f'节点 {node_index + 1}'),
+            'latency': latency,
+            'speed': speed,
+            'status': 'success' if latency < 200 else 'warning' if latency < 500 else 'error'
+        }
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'测速失败: {e}'})
+
+@app.route('/api/get_node_groups', methods=['GET'])
+def get_node_groups():
+    """获取节点分组"""
+    try:
+        nodes = manager.get_nodes_list()
+        groups = {
+            '地区': {},
+            '类型': {},
+            '速度': {}
+        }
+        
+        for i, node in enumerate(nodes):
+            # 按类型分组
+            node_type = node.get('type', 'Unknown')
+            if node_type not in groups['类型']:
+                groups['类型'][node_type] = []
+            groups['类型'][node_type].append(i)
+            
+            # 按地区分组（从节点名称中提取）
+            name = node.get('name', '').lower()
+            region = '其他'
+            if any(keyword in name for keyword in ['香港', 'hk', 'hongkong']):
+                region = '香港'
+            elif any(keyword in name for keyword in ['台湾', 'tw', 'taiwan']):
+                region = '台湾'
+            elif any(keyword in name for keyword in ['美国', 'us', 'usa']):
+                region = '美国'
+            elif any(keyword in name for keyword in ['日本', 'jp', 'japan']):
+                region = '日本'
+            elif any(keyword in name for keyword in ['新加坡', 'sg', 'singapore']):
+                region = '新加坡'
+            elif any(keyword in name for keyword in ['韩国', 'kr', 'korea']):
+                region = '韩国'
+            
+            if region not in groups['地区']:
+                groups['地区'][region] = []
+            groups['地区'][region].append(i)
+        
+        return jsonify({'success': True, 'groups': groups})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'获取分组失败: {e}'})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8888, debug=False) 

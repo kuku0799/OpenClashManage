@@ -13,12 +13,33 @@
             --danger-color: #dc3545;
             --warning-color: #ffc107;
             --info-color: #17a2b8;
+            --bg-color: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dee2e6;
+            --hover-bg: #f8f9fa;
+        }
+        
+        [data-theme="dark"] {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --border-color: #404040;
+            --hover-bg: #3a3a3a;
         }
         
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
         
         .main-container {
@@ -39,17 +60,19 @@
         }
         
         .status-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             overflow: hidden;
+            border: 1px solid var(--border-color);
         }
         
         .status-header {
             padding: 15px 20px;
             font-weight: bold;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
         }
         
         .status-content {
@@ -104,18 +127,19 @@
         .nodes-list {
             max-height: 400px;
             overflow-y: auto;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
+            background: var(--card-bg);
         }
         
         .node-item {
             padding: 10px 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
             transition: background-color 0.2s;
         }
         
         .node-item:hover {
-            background-color: #f8f9fa;
+            background-color: var(--hover-bg);
         }
         
         .node-item:last-child {
@@ -260,9 +284,17 @@
     <div class="container-fluid">
         <div class="main-container">
             <!-- 头部 -->
-            <div class="header">
-                <h1><i class="bi bi-shield-check"></i> OpenClash 节点管理面板</h1>
-                <p class="mb-0">自动化节点同步与管理工具</p>
+            <div class="header d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="bi bi-shield-check"></i> OpenClash 节点管理面板</h1>
+                    <p class="mb-0">自动化节点同步与管理工具</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary" id="theme-toggle" onclick="toggleTheme()">
+                        <i class="bi bi-moon" id="theme-icon"></i>
+                        <span id="theme-text">深色模式</span>
+                    </button>
+                </div>
             </div>
             
             <div class="p-4">
@@ -343,6 +375,9 @@
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <h6 class="mb-0">当前节点</h6>
                                             <div>
+                                                <button class="btn btn-sm btn-outline-info" onclick="showNodeGroups()">
+                                                    <i class="bi bi-collection"></i> 分组查看
+                                                </button>
                                                 <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()">
                                                     <i class="bi bi-arrow-clockwise"></i> 刷新
                                                 </button>
@@ -437,8 +472,42 @@
         let statusUpdateInterval;
         let selectedNodes = new Set();
         
+        // 主题切换功能
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                themeIcon.className = 'bi bi-moon';
+                themeText.textContent = '深色模式';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'bi bi-sun';
+                themeText.textContent = '浅色模式';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        // 初始化主题
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (savedTheme === 'dark') {
+                body.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'bi bi-sun';
+                themeText.textContent = '浅色模式';
+            }
+        }
+        
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
             updateStatus();
             loadSystemInfo();
             loadNodesList();
@@ -735,7 +804,10 @@
                             </div>
                         </div>
                         <div class="node-actions">
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleNode(${node.index})">
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="testNodeSpeed(${node.index})" title="测速">
+                                <i class="bi bi-speedometer2"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleNode(${node.index})" title="删除">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -768,10 +840,88 @@
             }
         }
         
+        // 显示节点分组
+        function showNodeGroups() {
+            fetch('/api/get_node_groups')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const container = document.getElementById('nodes-list-container');
+                        let html = '<div class="node-groups">';
+                        
+                        for (const [groupType, groups] of Object.entries(data.groups)) {
+                            html += `<div class="group-section mb-4">
+                                <h6 class="group-title">${groupType}</h6>`;
+                            
+                            for (const [groupName, nodeIndices] of Object.entries(groups)) {
+                                html += `<div class="group-item mb-3">
+                                    <div class="group-header d-flex justify-content-between align-items-center">
+                                        <span class="group-name">${groupName}</span>
+                                        <span class="group-count badge bg-secondary">${nodeIndices.length} 个节点</span>
+                                    </div>
+                                    <div class="group-nodes">`;
+                                
+                                // 这里可以显示该分组下的节点列表
+                                html += `<small class="text-muted">节点索引: ${nodeIndices.join(', ')}</small>`;
+                                
+                                html += `</div></div>`;
+                            }
+                            
+                            html += '</div>';
+                        }
+                        
+                        html += '</div>';
+                        container.innerHTML = html;
+                        showToast('分组信息已加载', 'success');
+                    } else {
+                        showToast(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showToast('获取分组失败: ' + error, 'danger');
+                });
+        }
+        
         // 刷新节点列表
         function refreshNodesList() {
             loadNodesList();
             showToast('节点列表已刷新', 'info');
+        }
+        
+        // 测试节点速度
+        function testNodeSpeed(index) {
+            const button = event.target.closest('button');
+            const originalContent = button.innerHTML;
+            
+            // 显示测速中状态
+            button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            button.disabled = true;
+            
+            fetch('/api/test_node_speed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ index: index })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const statusClass = data.status === 'success' ? 'success' : 
+                                      data.status === 'warning' ? 'warning' : 'danger';
+                    showToast(`${data.node_name}: 延迟 ${data.latency}ms, 速度 ${data.speed}Mbps`, statusClass);
+                } else {
+                    showToast(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('测速失败: ' + error, 'danger');
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            });
         }
         
         // 删除单个节点
