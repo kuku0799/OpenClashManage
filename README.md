@@ -39,17 +39,38 @@ OpenClashManage/
 
 ## 🛠️ 安装和运行
 
-### 1. 安装依赖
+### OpenWrt 系统安装
+
+#### 方法一：标准安装（推荐）
+```bash
+curl -sSL https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_openwrt_robust.sh | bash
+```
+
+#### 方法二：wget安装（curl有问题时使用）
+```bash
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_openwrt_wget.sh | bash
+```
+
+#### 方法三：修复curl依赖后安装
+如果遇到curl库依赖问题，先运行修复脚本：
+```bash
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/fix_curl_deps.sh | bash
+```
+然后重新运行标准安装。
+
+### 通用安装（其他系统）
+
+#### 1. 安装依赖
 ```bash
 pip3 install -r requirements.txt
 ```
 
-### 2. 启动Web面板
+#### 2. 启动Web面板
 ```bash
 python3 app.py
 ```
 
-### 3. 访问面板
+#### 3. 访问面板
 打开浏览器访问: `http://your-ip:8080`
 
 ## 📋 使用说明
@@ -118,7 +139,44 @@ app.run(host='0.0.0.0', port=8080, debug=False)
 
 ## 🔍 故障排除
 
-### 常见问题
+### OpenWrt 安装问题
+
+#### 1. 存储空间不足
+**错误信息**: `Only have 0kb available on filesystem /overlay`
+**解决方案**:
+```bash
+# 清理opkg缓存
+opkg clean
+
+# 删除不需要的软件包
+opkg list-installed | grep -v "openclash\|python3\|wget" | xargs opkg remove
+
+# 重启系统释放临时文件
+reboot
+```
+
+#### 2. curl库依赖问题
+**错误信息**: `Error loading shared library libmbedtls.so.21`
+**解决方案**:
+```bash
+# 运行修复脚本
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/fix_curl_deps.sh | bash
+
+# 或使用wget安装
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_openwrt_wget.sh | bash
+```
+
+#### 3. Python包安装失败
+**解决方案**:
+```bash
+# 使用opkg安装Python包
+opkg install python3-light python3-yaml python3-flask
+
+# 或降级到稳定版本
+opkg install --force-downgrade python3=3.10.13-2
+```
+
+### 通用问题
 
 1. **守护进程无法启动**
    - 检查 `jk.sh` 文件权限

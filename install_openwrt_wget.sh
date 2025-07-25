@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# OpenClash 管理面板 - OpenWrt 专用安装脚本 (增强版)
+# OpenClash 管理面板 - OpenWrt 专用安装脚本 (wget版本)
 # 作者: OpenClashManage
-# 版本: 1.1.0
+# 版本: 1.0.0
 
 set -e
 
@@ -34,7 +34,7 @@ print_step() {
 check_root() {
     if [[ $EUID -ne 0 ]]; then
         print_error "此脚本需要root权限运行"
-        print_message "请使用: bash install_openwrt_robust.sh"
+        print_message "请使用: bash install_openwrt_wget.sh"
         exit 1
     fi
 }
@@ -133,12 +133,6 @@ install_openwrt_deps() {
         opkg install python3-yaml
     fi
     
-    # 检查curl是否已安装
-    if ! opkg list-installed | grep -q "curl"; then
-        print_message "安装 curl..."
-        opkg install curl
-    fi
-    
     # 检查wget是否已安装
     if ! opkg list-installed | grep -q "wget"; then
         print_message "安装 wget..."
@@ -176,7 +170,7 @@ create_directories() {
     print_message "项目目录: $PROJECT_DIR"
 }
 
-# 下载项目文件
+# 下载项目文件 (使用wget)
 download_files() {
     print_step "下载项目文件..."
     
@@ -200,9 +194,9 @@ download_files() {
         print_message "下载 $file..."
         if [[ "$file" == "templates/index.html" ]]; then
             mkdir -p "$PROJECT_DIR/templates"
-            curl -sSL "$GITHUB_REPO/$file" -o "$PROJECT_DIR/$file"
+            wget -q --no-check-certificate "$GITHUB_REPO/$file" -O "$PROJECT_DIR/$file"
         else
-            curl -sSL "$GITHUB_REPO/$file" -o "$PROJECT_DIR/$file"
+            wget -q --no-check-certificate "$GITHUB_REPO/$file" -O "$PROJECT_DIR/$file"
         fi
         
         if [[ $? -eq 0 ]]; then
