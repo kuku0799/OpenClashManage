@@ -89,7 +89,7 @@ create_directories() {
 download_files() {
     print_step "下载项目文件..."
     
-    GITHUB_REPO="https://raw.githubusercontent.com/OpenClashManage/OpenClashManage/main"
+    GITHUB_REPO="https://raw.githubusercontent.com/kuku0799/OpenClashManage/main"
     
     # 下载主要文件
     files=(
