@@ -178,6 +178,21 @@
             color: white;
         }
         
+        .node-type-http {
+            background-color: #ff8c42;
+            color: white;
+        }
+        
+        .node-type-socks {
+            background-color: #8b5cf6;
+            color: white;
+        }
+        
+        .node-type-default {
+            background-color: #6c757d;
+            color: white;
+        }
+        
         .node-url {
             font-family: 'Courier New', monospace;
             font-size: 0.8rem;
@@ -376,7 +391,7 @@
                         <div class="status-card">
                             <div class="status-header">
                                 <i class="bi bi-list-ul"></i> 节点管理
-                                <small class="text-muted ms-2">支持 ss:// vmess:// vless:// trojan:// 协议</small>
+                                <small class="text-muted ms-2">支持全协议节点</small>
                             </div>
                             <div class="status-content">
                                 <!-- 选项卡导航 -->
@@ -448,8 +463,8 @@
                                         <div id="manualInput" class="import-section">
                                             <div class="mb-3">
                                                 <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
-                                                <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
-                                                          placeholder="# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议">{{ nodes_content }}</textarea>
+                                                                                            <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
+                                                      placeholder="# 在此粘贴你的节点链接，一行一个，支持全协议节点">{{ nodes_content }}</textarea>
                                             </div>
                                         </div>
                                         
@@ -846,26 +861,31 @@
             
             let validCount = 0;
             let invalidCount = 0;
+            let protocols = new Set();
             
             lines.forEach((line, index) => {
                 line = line.trim();
                 if (line && !line.startswith('#')) {
-                    // 验证节点格式
-                    const validPrefixes = ['ss://', 'vmess://', 'vless://', 'trojan://'];
-                    const isValid = validPrefixes.some(prefix => line.startsWith(prefix));
+                    // 验证节点格式 - 支持所有协议
+                    const isValid = line.includes('://') && line.length > 10;
                     
                     if (isValid) {
                         validCount++;
+                        // 提取协议类型
+                        const protocol = line.split('://')[0].toUpperCase();
+                        protocols.add(protocol);
                     } else {
                         invalidCount++;
                     }
                 }
             });
             
+            const protocolList = Array.from(protocols).join(', ');
+            
             if (invalidCount === 0) {
-                validationResult.innerHTML = `<span class="text-success">✅ 验证通过: ${validCount} 个有效节点</span>`;
+                validationResult.innerHTML = `<span class="text-success">✅ 验证通过: ${validCount} 个有效节点 (协议: ${protocolList})</span>`;
             } else {
-                validationResult.innerHTML = `<span class="text-warning">⚠️ 发现 ${invalidCount} 个无效节点，${validCount} 个有效节点</span>`;
+                validationResult.innerHTML = `<span class="text-warning">⚠️ 发现 ${invalidCount} 个无效节点，${validCount} 个有效节点 (协议: ${protocolList})</span>`;
             }
         }
         
@@ -1029,12 +1049,25 @@
         
         // 获取节点类型CSS类
         function getNodeTypeClass(type) {
-            switch (type) {
-                case 'Shadowsocks': return 'node-type-ss';
-                case 'VMess': return 'node-type-vmess';
-                case 'VLESS': return 'node-type-vless';
-                case 'Trojan': return 'node-type-trojan';
-                default: return 'node-type-ss';
+            // 根据协议类型返回对应的CSS类
+            const typeLower = type.toLowerCase();
+            
+            // 常见协议的特殊样式
+            if (typeLower.includes('ss') || typeLower.includes('shadowsocks')) {
+                return 'node-type-ss';
+            } else if (typeLower.includes('vmess')) {
+                return 'node-type-vmess';
+            } else if (typeLower.includes('vless')) {
+                return 'node-type-vless';
+            } else if (typeLower.includes('trojan')) {
+                return 'node-type-trojan';
+            } else if (typeLower.includes('http')) {
+                return 'node-type-http';
+            } else if (typeLower.includes('socks')) {
+                return 'node-type-socks';
+            } else {
+                // 默认样式
+                return 'node-type-default';
             }
         }
         

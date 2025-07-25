@@ -83,19 +83,15 @@ class OpenClashManager:
     
     def is_valid_node_url(self, url):
         """验证是否为有效的节点URL"""
-        valid_prefixes = ['ss://', 'vmess://', 'vless://', 'trojan://']
-        return any(url.startswith(prefix) for prefix in valid_prefixes)
+        # 支持所有协议，只要包含://就认为是有效节点
+        return '://' in url and len(url) > 10
     
     def get_node_type(self, url):
         """获取节点类型"""
-        if url.startswith('ss://'):
-            return 'Shadowsocks'
-        elif url.startswith('vmess://'):
-            return 'VMess'
-        elif url.startswith('vless://'):
-            return 'VLESS'
-        elif url.startswith('trojan://'):
-            return 'Trojan'
+        # 提取协议类型
+        if '://' in url:
+            protocol = url.split('://')[0].upper()
+            return protocol
         else:
             return 'Unknown'
     
@@ -586,9 +582,8 @@ def validate_node():
         if not node_url:
             return jsonify({'success': False, 'message': '节点URL不能为空'})
         
-        # 验证节点格式
-        valid_prefixes = ['ss://', 'vmess://', 'vless://', 'trojan://']
-        is_valid = any(node_url.startswith(prefix) for prefix in valid_prefixes)
+        # 验证节点格式 - 支持所有协议
+        is_valid = '://' in node_url and len(node_url) > 10
         
         if is_valid:
             node_type = manager.get_node_type(node_url)
