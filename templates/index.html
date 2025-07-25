@@ -882,6 +882,33 @@
                 });
         }
         
+        // 更新编辑选项卡内容
+        function updateEditTabContent() {
+            // 重新加载节点文件内容到文本框，确保与服务器同步
+            fetch('/api/get_nodes')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 获取当前文本框的注释部分
+                        const textarea = document.getElementById('nodes-textarea');
+                        const currentContent = textarea.value;
+                        const lines = currentContent.split('\n');
+                        const comments = lines.filter(line => {
+                            line = line.trim();
+                            return line.startsWith('#') || line === '';
+                        });
+                        
+                        // 构建新的内容：保留注释，移除已删除的节点
+                        const validNodes = data.nodes.map(node => node.full_line);
+                        const newContent = comments.join('\n') + '\n' + validNodes.join('\n');
+                        textarea.value = newContent;
+                    }
+                })
+                .catch(error => {
+                    console.error('更新编辑选项卡失败:', error);
+                });
+        }
+        
         // 刷新节点列表
         function refreshNodesList() {
             loadNodesList();
@@ -941,6 +968,8 @@
                         setTimeout(() => {
                             loadNodesList();
                             updateStatus();
+                            // 同步更新编辑选项卡的内容
+                            updateEditTabContent();
                         }, 1000);
                     }
                 })
@@ -974,6 +1003,8 @@
                         setTimeout(() => {
                             loadNodesList();
                             updateStatus();
+                            // 同步更新编辑选项卡的内容
+                            updateEditTabContent();
                         }, 1000);
                     }
                 })
