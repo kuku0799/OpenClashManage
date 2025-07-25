@@ -1,0 +1,2 @@
+Flask==2.3.3
+ruamel.yaml==0.18.5 
