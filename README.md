@@ -46,9 +46,9 @@ OpenClashManage/
 curl -sSL https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install.sh | bash
 ```
 
-#### 如果curl有问题，使用wget
+#### 如果curl有问题，使用wget版本
 ```bash
-wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_wget.sh | bash
 ```
 
 ### OpenWrt 系统专用安装
