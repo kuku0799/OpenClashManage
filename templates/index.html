@@ -99,8 +99,87 @@
             border-radius: 8px;
             max-height: 300px;
             overflow-y: auto;
-            font-size: 12px;
+        }
+        
+        .nodes-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .node-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .node-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .node-item:last-child {
+            border-bottom: none;
+        }
+        
+        .node-item.selected {
+            background-color: #e3f2fd;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .node-type-badge {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        
+        .node-type-ss {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .node-type-vmess {
+            background-color: #4ecdc4;
+            color: white;
+        }
+        
+        .node-type-vless {
+            background-color: #45b7d1;
+            color: white;
+        }
+        
+        .node-type-trojan {
+            background-color: #96ceb4;
+            color: white;
+        }
+        
+        .node-url {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .node-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+                .node-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .node-item:hover .node-actions {
+            opacity: 1;
+        }
+        
+        .nodes-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
             line-height: 1.4;
+            min-height: 200px;
         }
         
         .nodes-textarea {
@@ -211,9 +290,33 @@
                                 <small class="text-muted ms-2">支持 ss:// vmess:// vless:// trojan:// 协议</small>
                             </div>
                             <div class="status-content">
+                                <!-- 节点列表 -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0">节点列表</h6>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()">
+                                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSelectedNodes()">
+                                                <i class="bi bi-trash"></i> 删除选中
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="nodes-list-container">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">加载中...</span>
+                                            </div>
+                                            <p class="mt-2">正在加载节点列表...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 节点编辑 -->
                                 <div class="mb-3">
                                     <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
-                                    <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
+                                    <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="8" 
                                               placeholder="# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议">{{ nodes_content }}</textarea>
                                 </div>
                                 <div class="action-buttons">
@@ -281,11 +384,13 @@
     <script>
         // 全局变量
         let statusUpdateInterval;
+        let selectedNodes = new Set();
         
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
             updateStatus();
             loadSystemInfo();
+            loadNodesList();
             
             // 每5秒更新状态
             statusUpdateInterval = setInterval(updateStatus, 5000);
@@ -420,6 +525,12 @@
             .then(response => response.json())
             .then(data => {
                 showToast(data.message, data.success ? 'success' : 'danger');
+                if (data.success) {
+                    setTimeout(() => {
+                        loadNodesList();
+                        updateStatus();
+                    }, 1000);
+                }
             })
             .catch(error => {
                 showToast('保存失败: ' + error, 'danger');
@@ -521,6 +632,149 @@
         function refreshLog() {
             updateStatus();
             showToast('日志已刷新', 'info');
+        }
+        
+        // 加载节点列表
+        function loadNodesList() {
+            fetch('/api/get_nodes')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderNodesList(data.nodes);
+                    } else {
+                        showToast('加载节点列表失败', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('加载节点列表失败:', error);
+                    showToast('加载节点列表失败', 'danger');
+                });
+        }
+        
+        // 渲染节点列表
+        function renderNodesList(nodes) {
+            const container = document.getElementById('nodes-list-container');
+            
+            if (nodes.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">暂无节点</div>';
+                return;
+            }
+            
+            let html = '<div class="nodes-list">';
+            nodes.forEach((node, index) => {
+                const nodeTypeClass = getNodeTypeClass(node.type);
+                const nodeName = node.name || `节点 ${index + 1}`;
+                const shortUrl = node.url.length > 50 ? node.url.substring(0, 50) + '...' : node.url;
+                
+                html += `
+                    <div class="node-item d-flex justify-content-between align-items-start" data-index="${node.index}">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <input type="checkbox" class="form-check-input me-2" 
+                                       onchange="toggleNodeSelection(${node.index})" 
+                                       id="node-${node.index}">
+                                <span class="node-type-badge ${nodeTypeClass}">${node.type}</span>
+                                <span class="node-name ms-2">${nodeName}</span>
+                            </div>
+                            <div class="node-url">${shortUrl}</div>
+                        </div>
+                        <div class="node-actions">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSingleNode(${node.index})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // 获取节点类型CSS类
+        function getNodeTypeClass(type) {
+            switch (type) {
+                case 'Shadowsocks': return 'node-type-ss';
+                case 'VMess': return 'node-type-vmess';
+                case 'VLESS': return 'node-type-vless';
+                case 'Trojan': return 'node-type-trojan';
+                default: return 'node-type-ss';
+            }
+        }
+        
+        // 切换节点选择状态
+        function toggleNodeSelection(index) {
+            if (selectedNodes.has(index)) {
+                selectedNodes.delete(index);
+                document.querySelector(`[data-index="${index}"]`).classList.remove('selected');
+            } else {
+                selectedNodes.add(index);
+                document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+            }
+        }
+        
+        // 刷新节点列表
+        function refreshNodesList() {
+            loadNodesList();
+            showToast('节点列表已刷新', 'info');
+        }
+        
+        // 删除单个节点
+        function deleteSingleNode(index) {
+            if (confirm(`确定要删除节点 #${index + 1} 吗？`)) {
+                fetch('/api/delete_node', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ index: index })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    showToast(data.message, data.success ? 'success' : 'danger');
+                    if (data.success) {
+                        setTimeout(() => {
+                            loadNodesList();
+                            updateStatus();
+                        }, 1000);
+                    }
+                })
+                .catch(error => {
+                    showToast('删除节点失败: ' + error, 'danger');
+                });
+            }
+        }
+        
+        // 删除选中的节点
+        function deleteSelectedNodes() {
+            if (selectedNodes.size === 0) {
+                showToast('请先选择要删除的节点', 'warning');
+                return;
+            }
+            
+            const indices = Array.from(selectedNodes);
+            if (confirm(`确定要删除选中的 ${indices.length} 个节点吗？`)) {
+                fetch('/api/delete_nodes_batch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ indices: indices })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    showToast(data.message, data.success ? 'success' : 'danger');
+                    if (data.success) {
+                        selectedNodes.clear();
+                        setTimeout(() => {
+                            loadNodesList();
+                            updateStatus();
+                        }, 1000);
+                    }
+                })
+                .catch(error => {
+                    showToast('批量删除节点失败: ' + error, 'danger');
+                });
+            }
         }
         
         // 页面卸载时清理定时器
