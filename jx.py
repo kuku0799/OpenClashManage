@@ -14,7 +14,22 @@ def decode_base64(data: str) -> str:
         return ""
 
 def clean_name(name: str, existing_names: set) -> str:
-    name = re.sub(r'[^一-龥a-zA-Z0-9_\-]', '', name.strip())[:24]
+    # 处理URL编码的节点名称
+    try:
+        name = unquote(name)
+    except:
+        pass
+    
+    # 移除特殊字符，保留中文、字母、数字、下划线、连字符
+    name = re.sub(r'[^一-龥a-zA-Z0-9_\-\.]', '', name.strip())
+    
+    # 如果名称为空或只包含特殊字符，使用默认名称
+    if not name or name.isspace():
+        name = "Unnamed"
+    
+    # 限制长度
+    name = name[:24]
+    
     original = name
     count = 1
     while name in existing_names:
@@ -26,10 +41,29 @@ def clean_name(name: str, existing_names: set) -> str:
 def extract_custom_name(link: str) -> str:
     match = re.search(r'#(.+)', link)
     if match:
-        name = unquote(match.group(1))
+        name = match.group(1)
+        # 处理URL编码的节点名称
+        try:
+            name = unquote(name)
+        except:
+            pass
         bracket_match = re.search(r'[（(](.*?)[)）]', name)
         return bracket_match.group(1) if bracket_match else name
     return "Unnamed"
+
+def process_node_name(raw_name: str, existing_names: set) -> str:
+    """处理节点名称，包括URL解码和清理"""
+    # 处理URL编码
+    try:
+        decoded_name = unquote(raw_name)
+        if decoded_name != raw_name and len(decoded_name) > 0:
+            raw_name = decoded_name
+    except:
+        pass
+    
+    # 清理名称
+    name = clean_name(raw_name, existing_names)
+    return name
 
 def parse_plugin_params(query: str) -> Dict:
     params = parse_qs(query)
@@ -64,7 +98,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
             # Shadowsocks
             if line.startswith("ss://"):
                 raw = line[5:]
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 if '@' in raw:
                     info, server = raw.split("@", 1)
                     info = decode_base64(info)
@@ -114,7 +148,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 if not decoded:
                     raise ValueError("Base64解码失败")
                 node = json.loads(decoded)
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 if not all([node.get("add"), node.get("port"), node.get("id")]):
                     raise ValueError("字段缺失")
                 parsed_nodes.append({
@@ -137,7 +171,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
             # VLESS
             elif line.startswith("vless://"):
                 info = line[8:].split("#")[0]
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 parts = info.split("@")
                 if len(parts) != 2:
                     raise ValueError("字段格式不正确")
@@ -166,7 +200,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 password = parsed.username
                 host, port = parsed.hostname, parsed.port
                 query = parse_qs(parsed.query)
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 if not all([host, port, password]):
                     raise ValueError("字段缺失")
                 parsed_nodes.append({
@@ -187,7 +221,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 host, port = parsed.hostname, parsed.port or 80
                 username = parsed.username or ""
                 password = parsed.password or ""
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 
                 node = {
                     "name": name,
@@ -209,7 +243,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 host, port = parsed.hostname, parsed.port or 443
                 username = parsed.username or ""
                 password = parsed.password or ""
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 
                 node = {
                     "name": name,
@@ -233,7 +267,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 username = parsed.username or ""
                 password = parsed.password or ""
                 query = parse_qs(parsed.query)
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 
                 # 验证必要参数
                 if not host or not port:
@@ -291,7 +325,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 obfsparam = unquote(params.get("obfsparam", [""])[0])
                 protoparam = unquote(params.get("protoparam", [""])[0])
                 
-                name = clean_name(remarks or extract_custom_name(line), existing_names)
+                name = process_node_name(remarks or extract_custom_name(line), existing_names)
                 password = decode_base64(password_b64)
                 
                 parsed_nodes.append({
@@ -314,7 +348,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 host, port = parsed.hostname, parsed.port or 443
                 password = parsed.username or ""
                 query = parse_qs(parsed.query)
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 
                 node = {
                     "name": name,
@@ -339,7 +373,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 parsed = urlparse(line)
                 host, port = parsed.hostname, parsed.port or 443
                 query = parse_qs(parsed.query)
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 
                 node = {
                     "name": name,
@@ -366,7 +400,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 parsed = urlparse(line)
                 host, port = parsed.hostname, parsed.port or 443
                 query = parse_qs(parsed.query)
-                name = clean_name(extract_custom_name(line), existing_names)
+                name = process_node_name(extract_custom_name(line), existing_names)
                 
                 node = {
                     "name": name,
