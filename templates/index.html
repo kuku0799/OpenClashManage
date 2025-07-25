@@ -222,6 +222,31 @@
             padding-top: 20px;
         }
         
+        /* 导入方式样式 */
+        .btn-group .btn {
+            border-radius: 0;
+        }
+        
+        .btn-group .btn:first-child {
+            border-top-left-radius: 0.375rem;
+            border-bottom-left-radius: 0.375rem;
+        }
+        
+        .btn-group .btn:last-child {
+            border-top-right-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+        
+        .import-section {
+            transition: all 0.3s ease;
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        
                 .node-actions {
             opacity: 0;
             transition: opacity 0.2s;
@@ -398,11 +423,77 @@
                                     
                                     <!-- 节点编辑选项卡 -->
                                     <div class="tab-pane fade" id="nodes-edit" role="tabpanel">
-                                        <div class="mb-3">
-                                            <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
-                                            <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
-                                                      placeholder="# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议">{{ nodes_content }}</textarea>
+                                        <!-- 导入方式选择 -->
+                                        <div class="mb-4">
+                                            <h6 class="mb-3">选择导入方式：</h6>
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check" name="importType" id="manualImport" value="manual" checked>
+                                                <label class="btn btn-outline-primary" for="manualImport">
+                                                    <i class="bi bi-pencil"></i> 手动输入
+                                                </label>
+                                                
+                                                <input type="radio" class="btn-check" name="importType" id="fileImport" value="file">
+                                                <label class="btn btn-outline-primary" for="fileImport">
+                                                    <i class="bi bi-file-earmark"></i> 文件导入
+                                                </label>
+                                                
+                                                <input type="radio" class="btn-check" name="importType" id="urlImport" value="url">
+                                                <label class="btn btn-outline-primary" for="urlImport">
+                                                    <i class="bi bi-link-45deg"></i> URL导入
+                                                </label>
+                                            </div>
                                         </div>
+                                        
+                                        <!-- 手动输入 -->
+                                        <div id="manualInput" class="import-section">
+                                            <div class="mb-3">
+                                                <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
+                                                <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
+                                                          placeholder="# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议">{{ nodes_content }}</textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 文件导入 -->
+                                        <div id="fileInput" class="import-section" style="display: none;">
+                                            <div class="mb-3">
+                                                <label for="fileUpload" class="form-label">选择节点文件</label>
+                                                <input type="file" class="form-control" id="fileUpload" accept=".txt,.conf,.yaml,.yml">
+                                                <div class="form-text">支持 .txt, .conf, .yaml, .yml 格式</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="fileContent" class="form-label">文件内容预览</label>
+                                                <textarea class="form-control" id="fileContent" rows="8" readonly></textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- URL导入 -->
+                                        <div id="urlInput" class="import-section" style="display: none;">
+                                            <div class="mb-3">
+                                                <label for="urlInput" class="form-label">节点订阅URL</label>
+                                                <div class="input-group">
+                                                    <input type="url" class="form-control" id="urlInput" 
+                                                           placeholder="https://example.com/nodes.txt">
+                                                    <button class="btn btn-outline-secondary" type="button" onclick="fetchUrlContent()">
+                                                        <i class="bi bi-download"></i> 获取
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="urlContent" class="form-label">URL内容预览</label>
+                                                <textarea class="form-control" id="urlContent" rows="8" readonly></textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 节点验证 -->
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <button class="btn btn-outline-info btn-sm me-2" onclick="validateCurrentNodes()">
+                                                    <i class="bi bi-check-circle"></i> 验证节点
+                                                </button>
+                                                <span id="validationResult" class="text-muted small"></span>
+                                            </div>
+                                        </div>
+                                        
                                         <div class="action-buttons">
                                             <button class="btn btn-primary btn-custom" onclick="saveNodes()">
                                                 <i class="bi bi-save"></i> 保存节点
@@ -511,6 +602,14 @@
             updateStatus();
             loadSystemInfo();
             loadNodesList();
+            
+            // 初始化导入功能
+            handleFileUpload();
+            
+            // 监听导入方式切换
+            document.querySelectorAll('input[name="importType"]').forEach(radio => {
+                radio.addEventListener('change', switchImportType);
+            });
             
             // 每5秒更新状态
             statusUpdateInterval = setInterval(updateStatus, 5000);
@@ -658,6 +757,116 @@
             .catch(error => {
                 showToast('保存失败: ' + error, 'danger');
             });
+        }
+        
+        // 切换导入方式
+        function switchImportType() {
+            const importType = document.querySelector('input[name="importType"]:checked').value;
+            const sections = document.querySelectorAll('.import-section');
+            
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            switch(importType) {
+                case 'manual':
+                    document.getElementById('manualInput').style.display = 'block';
+                    break;
+                case 'file':
+                    document.getElementById('fileInput').style.display = 'block';
+                    break;
+                case 'url':
+                    document.getElementById('urlInput').style.display = 'block';
+                    break;
+            }
+        }
+        
+        // 文件上传处理
+        function handleFileUpload() {
+            const fileInput = document.getElementById('fileUpload');
+            const fileContent = document.getElementById('fileContent');
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fileContent.value = e.target.result;
+                    };
+                    reader.readAsText(file);
+                }
+            });
+        }
+        
+        // 从URL获取内容
+        function fetchUrlContent() {
+            const urlInput = document.getElementById('urlInput');
+            const urlContent = document.getElementById('urlContent');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showToast('请输入URL', 'warning');
+                return;
+            }
+            
+            urlContent.value = '正在获取内容...';
+            
+            fetch('/api/import_nodes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: 'url',
+                    content: url
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    urlContent.value = data.content || '获取成功';
+                    showToast('URL内容获取成功', 'success');
+                } else {
+                    urlContent.value = '';
+                    showToast(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                urlContent.value = '';
+                showToast('获取URL内容失败: ' + error, 'danger');
+            });
+        }
+        
+        // 验证当前节点
+        function validateCurrentNodes() {
+            const textarea = document.getElementById('nodes-textarea');
+            const content = textarea.value;
+            const lines = content.split('\n');
+            const validationResult = document.getElementById('validationResult');
+            
+            let validCount = 0;
+            let invalidCount = 0;
+            
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (line && !line.startswith('#')) {
+                    // 验证节点格式
+                    const validPrefixes = ['ss://', 'vmess://', 'vless://', 'trojan://'];
+                    const isValid = validPrefixes.some(prefix => line.startsWith(prefix));
+                    
+                    if (isValid) {
+                        validCount++;
+                    } else {
+                        invalidCount++;
+                    }
+                }
+            });
+            
+            if (invalidCount === 0) {
+                validationResult.innerHTML = `<span class="text-success">✅ 验证通过: ${validCount} 个有效节点</span>`;
+            } else {
+                validationResult.innerHTML = `<span class="text-warning">⚠️ 发现 ${invalidCount} 个无效节点，${validCount} 个有效节点</span>`;
+            }
         }
         
         // 清空节点

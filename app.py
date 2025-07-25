@@ -530,5 +530,78 @@ def get_node_groups():
     except Exception as e:
         return jsonify({'success': False, 'message': f'获取分组失败: {e}'})
 
+@app.route('/api/import_nodes', methods=['POST'])
+def import_nodes():
+    """导入节点（支持多种格式）"""
+    try:
+        data = request.get_json()
+        import_type = data.get('type')  # 'manual', 'file', 'url'
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({'success': False, 'message': '内容不能为空'})
+        
+        # 获取当前节点内容
+        current_content = manager.get_nodes_content()
+        
+        if import_type == 'manual':
+            # 手动输入：直接添加新内容
+            new_content = current_content + '\n' + content
+        elif import_type == 'file':
+            # 文件导入：解析文件内容
+            new_content = current_content + '\n' + content
+        elif import_type == 'url':
+            # URL导入：从URL获取节点列表
+            try:
+                import requests
+                response = requests.get(content, timeout=10)
+                if response.status_code == 200:
+                    url_content = response.text
+                    new_content = current_content + '\n' + url_content
+                else:
+                    return jsonify({'success': False, 'message': f'URL请求失败: {response.status_code}'})
+            except Exception as e:
+                return jsonify({'success': False, 'message': f'URL导入失败: {e}'})
+        else:
+            return jsonify({'success': False, 'message': '不支持的导入类型'})
+        
+        # 保存新内容
+        if manager.save_nodes_content(new_content):
+            write_log(f"✅ 成功导入节点 (类型: {import_type})")
+            return jsonify({'success': True, 'message': '节点导入成功'})
+        else:
+            return jsonify({'success': False, 'message': '保存节点失败'})
+            
+    except Exception as e:
+        write_log(f"❌ 导入节点失败: {e}")
+        return jsonify({'success': False, 'message': f'导入节点失败: {e}'})
+
+@app.route('/api/validate_node', methods=['POST'])
+def validate_node():
+    """验证单个节点格式"""
+    try:
+        data = request.get_json()
+        node_url = data.get('url', '').strip()
+        
+        if not node_url:
+            return jsonify({'success': False, 'message': '节点URL不能为空'})
+        
+        # 验证节点格式
+        valid_prefixes = ['ss://', 'vmess://', 'vless://', 'trojan://']
+        is_valid = any(node_url.startswith(prefix) for prefix in valid_prefixes)
+        
+        if is_valid:
+            node_type = manager.get_node_type(node_url)
+            return jsonify({
+                'success': True, 
+                'message': '节点格式正确',
+                'type': node_type
+            })
+        else:
+            return jsonify({'success': False, 'message': '不支持的节点格式'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'验证节点失败: {e}'})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8888, debug=False) 
