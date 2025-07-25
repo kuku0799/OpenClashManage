@@ -448,4 +448,4 @@ def delete_nodes_batch():
         return jsonify({'success': False, 'message': f'批量删除节点失败: {e}'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=False) 
+    app.run(host='0.0.0.0', port=8888, debug=False) 

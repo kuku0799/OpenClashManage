@@ -26,7 +26,7 @@ fi
 
 # 启动Web面板
 echo "🚀 启动 OpenClash 管理面板..."
-echo "📱 访问地址: http://$(hostname -I | awk '{print $1}'):8080"
+echo "📱 访问地址: http://$(hostname -I | awk '{print $1}'):8888"
 echo "⏹️  按 Ctrl+C 停止服务"
 echo ""
 

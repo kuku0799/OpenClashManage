@@ -83,7 +83,7 @@ python3 app.py
 ```
 
 #### 3. 访问面板
-打开浏览器访问: `http://your-ip:8080`
+打开浏览器访问: `http://your-ip:8888`
 
 ## 📋 使用说明
 
@@ -121,9 +121,9 @@ PID_FILE = "/tmp/openclash_watchdog.pid"      # 守护进程PID文件
 ```
 
 ### 端口配置
-默认端口为8080，可在 `app.py` 底部修改：
+默认端口为8888，可在 `app.py` 底部修改：
 ```python
-app.run(host='0.0.0.0', port=8080, debug=False)
+app.run(host='0.0.0.0', port=8888, debug=False)
 ```
 
 ## 🔄 工作流程
@@ -202,7 +202,7 @@ opkg install --force-downgrade python3=3.10.13-2
 
 3. **Web面板无法访问**
    - 检查防火墙设置
-   - 确认端口8080未被占用
+   - 确认端口8888未被占用
    - 验证Flask应用正常启动
 
 ### 日志查看

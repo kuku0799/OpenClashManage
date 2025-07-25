@@ -296,7 +296,7 @@ show_result() {
     echo "🎉 OpenClash 管理面板安装成功！"
     echo ""
     echo "📱 访问地址:"
-    echo "   http://$(hostname -I | awk '{print $1}'):8080"
+    echo "   http://$(hostname -I | awk '{print $1}'):8888"
     echo ""
     echo "🔧 管理命令:"
     if [[ $SYSTEM_TYPE == "openwrt" ]]; then

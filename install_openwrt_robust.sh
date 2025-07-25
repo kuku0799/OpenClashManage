@@ -359,7 +359,7 @@ show_result() {
     echo "🎉 OpenClash 管理面板安装成功！"
     echo ""
     echo "📱 访问地址:"
-    echo "   http://$(uci get network.lan.ipaddr 2>/dev/null || echo "192.168.1.1"):8080"
+    echo "   http://$(uci get network.lan.ipaddr 2>/dev/null || echo "192.168.1.1"):8888"
     echo ""
     echo "🔧 管理命令:"
     echo "   启动服务: /etc/init.d/openclash-manage start"
