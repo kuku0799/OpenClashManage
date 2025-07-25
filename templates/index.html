@@ -318,6 +318,157 @@
             right: 20px;
             z-index: 1050;
         }
+        
+        /* 加载动画 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 搜索框样式 */
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            padding-left: 40px;
+            border-radius: 25px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        /* 节点操作工具栏 */
+        .nodes-toolbar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        /* 节点统计信息 */
+        .nodes-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* 键盘快捷键提示 */
+        .shortcuts-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            z-index: 1000;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .shortcuts-hint:hover {
+            opacity: 1;
+        }
+        
+        /* 节点卡片悬停效果增强 */
+        .node-item {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        
+        .node-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 按钮悬停效果增强 */
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .status-content {
+                padding: 15px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn-custom {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .nodes-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -412,19 +563,39 @@
                                 <div class="tab-content" id="nodesTabContent">
                                     <!-- 节点列表选项卡 -->
                                     <div class="tab-pane fade show active" id="nodes-list" role="tabpanel">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="mb-0">当前节点</h6>
-                                            <div>
-                                                <button class="btn btn-sm btn-outline-info" onclick="showNodeGroups()">
-                                                    <i class="bi bi-collection"></i> 分组查看
+                                        <!-- 节点工具栏 -->
+                                        <div class="nodes-toolbar">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <h6 class="mb-0">当前节点</h6>
+                                                <div class="nodes-stats" id="nodes-stats">
+                                                    <span class="stat-item">
+                                                        <i class="bi bi-circle-fill text-success"></i>
+                                                        <span id="total-nodes">0</span> 个
+                                                    </span>
+                                                    <span class="stat-item">
+                                                        <i class="bi bi-check-circle-fill text-primary"></i>
+                                                        <span id="selected-nodes">0</span> 选中
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-outline-info" onclick="showNodeGroups()" title="分组查看">
+                                                    <i class="bi bi-collection"></i> 分组
                                                 </button>
-                                                <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()" title="刷新列表">
                                                     <i class="bi bi-arrow-clockwise"></i> 刷新
                                                 </button>
-                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSelectedNodes()">
-                                                    <i class="bi bi-trash"></i> 删除选中
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSelectedNodes()" title="删除选中节点">
+                                                    <i class="bi bi-trash"></i> 删除
                                                 </button>
                                             </div>
+                                        </div>
+                                        
+                                        <!-- 搜索框 -->
+                                        <div class="search-container">
+                                            <i class="bi bi-search search-icon"></i>
+                                            <input type="text" class="form-control search-input" id="node-search" 
+                                                   placeholder="搜索节点名称、协议类型..." onkeyup="filterNodes()">
                                         </div>
                                         <div id="nodes-list-container">
                                             <div class="text-center">
@@ -572,11 +743,23 @@
     <!-- Toast 通知 -->
     <div class="toast-container"></div>
     
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- 键盘快捷键提示 -->
+    <div class="shortcuts-hint" id="shortcuts-hint">
+        <strong>快捷键:</strong> Ctrl+S 保存 | Ctrl+F 搜索 | Ctrl+A 全选 | Del 删除选中
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 全局变量
         let statusUpdateInterval;
         let selectedNodes = new Set();
+        let allNodes = []; // 存储所有节点数据
+        let filteredNodes = []; // 存储过滤后的节点数据
         
         // 主题切换功能
         function toggleTheme() {
@@ -625,6 +808,9 @@
             document.querySelectorAll('input[name="importType"]').forEach(radio => {
                 radio.addEventListener('change', switchImportType);
             });
+            
+            // 初始化键盘快捷键
+            initKeyboardShortcuts();
             
             // 每5秒更新状态
             statusUpdateInterval = setInterval(updateStatus, 5000);
@@ -743,6 +929,106 @@
             toastElement.addEventListener('hidden.bs.toast', () => {
                 toastElement.remove();
             });
+        }
+        
+        // 显示/隐藏加载动画
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        // 初始化键盘快捷键
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+S: 保存节点
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    saveNodes();
+                }
+                
+                // Ctrl+F: 聚焦搜索框
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('node-search');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                
+                // Ctrl+A: 全选节点
+                if (e.ctrlKey && e.key === 'a') {
+                    e.preventDefault();
+                    selectAllNodes();
+                }
+                
+                // Delete: 删除选中节点
+                if (e.key === 'Delete') {
+                    e.preventDefault();
+                    deleteSelectedNodes();
+                }
+                
+                // Escape: 取消选择
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    clearSelection();
+                }
+            });
+        }
+        
+        // 全选节点
+        function selectAllNodes() {
+            const checkboxes = document.querySelectorAll('.node-item input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                const index = parseInt(checkbox.id.replace('node-', ''));
+                selectedNodes.add(index);
+                checkbox.closest('.node-item').classList.add('selected');
+            });
+            updateNodesStats();
+            showToast(`已选择 ${selectedNodes.size} 个节点`, 'info');
+        }
+        
+        // 取消选择
+        function clearSelection() {
+            selectedNodes.clear();
+            const checkboxes = document.querySelectorAll('.node-item input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.closest('.node-item').classList.remove('selected');
+            });
+            updateNodesStats();
+        }
+        
+        // 更新节点统计信息
+        function updateNodesStats() {
+            document.getElementById('total-nodes').textContent = allNodes.length;
+            document.getElementById('selected-nodes').textContent = selectedNodes.size;
+        }
+        
+        // 过滤节点
+        function filterNodes() {
+            const searchTerm = document.getElementById('node-search').value.toLowerCase();
+            
+            if (!searchTerm) {
+                filteredNodes = [...allNodes];
+            } else {
+                filteredNodes = allNodes.filter(node => {
+                    const nodeName = (node.name || '').toLowerCase();
+                    const nodeType = node.type.toLowerCase();
+                    const nodeUrl = node.url.toLowerCase();
+                    
+                    return nodeName.includes(searchTerm) || 
+                           nodeType.includes(searchTerm) || 
+                           nodeUrl.includes(searchTerm);
+                });
+            }
+            
+            renderNodesList(filteredNodes);
+            showToast(`找到 ${filteredNodes.length} 个匹配的节点`, 'info');
         }
         
         // 保存节点
@@ -988,16 +1274,22 @@
         
         // 加载节点列表
         function loadNodesList() {
+            showLoading();
             fetch('/api/get_nodes')
                 .then(response => response.json())
                 .then(data => {
+                    hideLoading();
                     if (data.success) {
-                        renderNodesList(data.nodes);
+                        allNodes = data.nodes;
+                        filteredNodes = [...allNodes];
+                        renderNodesList(filteredNodes);
+                        updateNodesStats();
                     } else {
                         showToast('加载节点列表失败', 'danger');
                     }
                 })
                 .catch(error => {
+                    hideLoading();
                     console.error('加载节点列表失败:', error);
                     showToast('加载节点列表失败', 'danger');
                 });
@@ -1016,14 +1308,15 @@
             nodes.forEach((node, index) => {
                 const nodeTypeClass = getNodeTypeClass(node.type);
                 const nodeName = node.name || `节点 ${index + 1}`;
+                const isSelected = selectedNodes.has(node.index);
                 
                 html += `
-                    <div class="node-item d-flex justify-content-between align-items-start" data-index="${node.index}">
+                    <div class="node-item d-flex justify-content-between align-items-start ${isSelected ? 'selected' : ''}" data-index="${node.index}">
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center mb-1">
                                 <input type="checkbox" class="form-check-input me-2" 
                                        onchange="toggleNodeSelection(${node.index})" 
-                                       id="node-${node.index}">
+                                       id="node-${node.index}" ${isSelected ? 'checked' : ''}>
                                 <span class="node-type-badge ${nodeTypeClass}">${node.type}</span>
                                 <span class="node-name ms-2 fw-bold">${nodeName}</span>
                             </div>
@@ -1080,6 +1373,7 @@
                 selectedNodes.add(index);
                 document.querySelector(`[data-index="${index}"]`).classList.add('selected');
             }
+            updateNodesStats();
         }
         
         // 显示节点分组
