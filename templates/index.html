@@ -168,6 +168,36 @@
             font-size: 1rem;
         }
         
+        /* 选项卡样式 */
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--primary-color);
+            background-color: #f8f9fa;
+            border: none;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: transparent;
+            border: none;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .tab-content {
+            padding-top: 20px;
+        }
+        
                 .node-actions {
             opacity: 0;
             transition: opacity 0.2s;
@@ -292,42 +322,61 @@
                                 <small class="text-muted ms-2">支持 ss:// vmess:// vless:// trojan:// 协议</small>
                             </div>
                             <div class="status-content">
-                                <!-- 节点列表 -->
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h6 class="mb-0">节点列表</h6>
-                                        <div>
-                                            <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()">
-                                                <i class="bi bi-arrow-clockwise"></i> 刷新
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSelectedNodes()">
-                                                <i class="bi bi-trash"></i> 删除选中
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div id="nodes-list-container">
-                                        <div class="text-center">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">加载中...</span>
-                                            </div>
-                                            <p class="mt-2">正在加载节点列表...</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- 选项卡导航 -->
+                                <ul class="nav nav-tabs mb-3" id="nodesTab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="nodes-list-tab" data-bs-toggle="tab" data-bs-target="#nodes-list" type="button" role="tab">
+                                            <i class="bi bi-list-ul"></i> 节点列表
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="nodes-edit-tab" data-bs-toggle="tab" data-bs-target="#nodes-edit" type="button" role="tab">
+                                            <i class="bi bi-pencil-square"></i> 编辑节点
+                                        </button>
+                                    </li>
+                                </ul>
                                 
-                                <!-- 节点编辑 -->
-                                <div class="mb-3">
-                                    <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
-                                    <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="8" 
-                                              placeholder="# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议">{{ nodes_content }}</textarea>
-                                </div>
-                                <div class="action-buttons">
-                                    <button class="btn btn-primary btn-custom" onclick="saveNodes()">
-                                        <i class="bi bi-save"></i> 保存节点
-                                    </button>
-                                    <button class="btn btn-secondary btn-custom" onclick="clearNodes()">
-                                        <i class="bi bi-trash"></i> 清空节点
-                                    </button>
+                                <!-- 选项卡内容 -->
+                                <div class="tab-content" id="nodesTabContent">
+                                    <!-- 节点列表选项卡 -->
+                                    <div class="tab-pane fade show active" id="nodes-list" role="tabpanel">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0">当前节点</h6>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()">
+                                                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSelectedNodes()">
+                                                    <i class="bi bi-trash"></i> 删除选中
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="nodes-list-container">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">加载中...</span>
+                                                </div>
+                                                <p class="mt-2">正在加载节点列表...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 节点编辑选项卡 -->
+                                    <div class="tab-pane fade" id="nodes-edit" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
+                                            <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
+                                                      placeholder="# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议">{{ nodes_content }}</textarea>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-primary btn-custom" onclick="saveNodes()">
+                                                <i class="bi bi-save"></i> 保存节点
+                                            </button>
+                                            <button class="btn btn-secondary btn-custom" onclick="clearNodes()">
+                                                <i class="bi bi-trash"></i> 清空节点
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -531,6 +580,9 @@
                     setTimeout(() => {
                         loadNodesList();
                         updateStatus();
+                        // 切换到节点列表选项卡
+                        const listTab = new bootstrap.Tab(document.getElementById('nodes-list-tab'));
+                        listTab.show();
                     }, 1000);
                 }
             })
