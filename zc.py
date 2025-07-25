@@ -12,8 +12,8 @@ def inject_groups(config, node_names: list) -> tuple:
             f.write(f"[{timestamp}] {msg}\n")
 
     def is_valid_name(name: str) -> bool:
-        # 更严格的名称验证，排除可能导致循环引用的字符
-        return bool(re.match(r'^[a-zA-Z0-9_\-\.]+$', name))
+        # 允许中文、字母、数字、下划线、连字符和点号
+        return bool(re.match(r'^[\u4e00-\u9fa5a-zA-Z0-9_\-\.]+$', name))
 
     # ✅ 节点名称合法性校验
     valid_names = []
