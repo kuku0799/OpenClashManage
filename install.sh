@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# OpenClash 管理面板一键安装脚本
+# OpenClash 管理面板 - 一键安装脚本
 # 作者: OpenClashManage
 # 版本: 1.0.0
 
@@ -44,14 +44,17 @@ check_system() {
     print_step "检查系统环境..."
     
     if [[ -f /etc/openwrt_release ]]; then
-        print_message "检测到 OpenWrt 系统"
+        print_message "✅ 检测到 OpenWrt 系统"
         SYSTEM_TYPE="openwrt"
     elif [[ -f /etc/debian_version ]]; then
-        print_message "检测到 Debian/Ubuntu 系统"
+        print_message "✅ 检测到 Debian/Ubuntu 系统"
         SYSTEM_TYPE="debian"
+    elif [[ -f /etc/redhat-release ]]; then
+        print_message "✅ 检测到 CentOS/RHEL 系统"
+        SYSTEM_TYPE="centos"
     else
-        print_warning "未知系统类型，可能不完全兼容"
-        SYSTEM_TYPE="unknown"
+        print_warning "⚠️  未知系统类型，将使用通用安装方式"
+        SYSTEM_TYPE="generic"
     fi
 }
 
@@ -59,18 +62,27 @@ check_system() {
 install_dependencies() {
     print_step "安装系统依赖..."
     
-    if [[ "$SYSTEM_TYPE" == "openwrt" ]]; then
-        # OpenWrt 依赖安装
-        opkg update
-        opkg install python3 python3-pip python3-yaml
-        opkg install luci-app-openclash || print_warning "OpenClash 未安装，请手动安装"
-    elif [[ "$SYSTEM_TYPE" == "debian" ]]; then
-        # Debian/Ubuntu 依赖安装
-        apt update
-        apt install -y python3 python3-pip python3-yaml
-    else
-        print_warning "请手动安装 Python3 和相关依赖"
-    fi
+    case $SYSTEM_TYPE in
+        "openwrt")
+            # OpenWrt 依赖安装
+            opkg update
+            opkg install python3 python3-pip python3-yaml curl wget
+            ;;
+        "debian")
+            # Debian/Ubuntu 依赖安装
+            apt update
+            apt install -y python3 python3-pip python3-yaml curl wget
+            ;;
+        "centos")
+            # CentOS/RHEL 依赖安装
+            yum update -y
+            yum install -y python3 python3-pip python3-yaml curl wget
+            ;;
+        *)
+            # 通用安装
+            print_message "请手动安装: python3, python3-pip, python3-yaml, curl, wget"
+            ;;
+    esac
 }
 
 # 创建项目目录
@@ -128,13 +140,17 @@ install_python_deps() {
     print_step "安装Python依赖..."
     
     cd /root/OpenClashManage
-    pip3 install -r requirements.txt
+    
+    # 使用pip3安装依赖
+    pip3 install Flask==2.3.3 ruamel.yaml==0.18.5
     
     if [[ $? -eq 0 ]]; then
         print_message "✓ Python依赖安装成功"
     else
-        print_error "✗ Python依赖安装失败"
-        exit 1
+        print_warning "⚠️  pip安装失败，尝试使用opkg安装..."
+        if [[ $SYSTEM_TYPE == "openwrt" ]]; then
+            opkg install python3-flask python3-yaml
+        fi
     fi
 }
 
@@ -150,13 +166,59 @@ set_permissions() {
     print_message "✓ 文件权限设置完成"
 }
 
-# 创建服务文件
+# 创建系统服务
 create_service() {
     print_step "创建系统服务..."
     
-    SERVICE_FILE="/etc/systemd/system/openclash-manage.service"
-    
-    cat > "$SERVICE_FILE" << EOF
+    if [[ $SYSTEM_TYPE == "openwrt" ]]; then
+        # OpenWrt 服务文件
+        SERVICE_FILE="/etc/init.d/openclash-manage"
+        
+        cat > "$SERVICE_FILE" << 'EOF'
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=15
+
+start() {
+    echo "启动 OpenClash 管理面板..."
+    cd /root/OpenClashManage
+    python3 app.py > /dev/null 2>&1 &
+    echo $! > /var/run/openclash-manage.pid
+}
+
+stop() {
+    echo "停止 OpenClash 管理面板..."
+    if [ -f /var/run/openclash-manage.pid ]; then
+        kill $(cat /var/run/openclash-manage.pid) 2>/dev/null
+        rm -f /var/run/openclash-manage.pid
+    fi
+}
+
+restart() {
+    stop
+    sleep 2
+    start
+}
+
+status() {
+    if [ -f /var/run/openclash-manage.pid ]; then
+        echo "OpenClash 管理面板正在运行"
+    else
+        echo "OpenClash 管理面板未运行"
+    fi
+}
+EOF
+
+        chmod +x "$SERVICE_FILE"
+        /etc/init.d/openclash-manage enable
+        
+        print_message "✓ OpenWrt服务创建完成"
+    else
+        # 其他系统的systemd服务
+        SERVICE_FILE="/etc/systemd/system/openclash-manage.service"
+        
+        cat > "$SERVICE_FILE" << EOF
 [Unit]
 Description=OpenClash Management Panel
 After=network.target
@@ -165,21 +227,22 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/root/OpenClashManage
-ExecStart=/usr/bin/python3 /root/OpenClashManage/app.py
+ExecStart=/usr/bin/python3 app.py
 Restart=always
-RestartSec=10
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload
-    systemctl enable openclash-manage.service
-    
-    print_message "✓ 系统服务创建完成"
+        systemctl daemon-reload
+        systemctl enable openclash-manage
+        
+        print_message "✓ Systemd服务创建完成"
+    fi
 }
 
-# 创建初始配置文件
+# 创建初始配置
 create_initial_config() {
     print_step "创建初始配置..."
     
@@ -197,15 +260,31 @@ EOF
     print_message "✓ 初始配置文件创建完成"
 }
 
-# 检查OpenClash安装
-check_openclash() {
-    print_step "检查OpenClash安装..."
+# 启动服务
+start_service() {
+    print_step "启动服务..."
     
-    if [[ -f "/etc/openclash/config.yaml" ]]; then
-        print_message "✓ OpenClash 已安装"
+    if [[ $SYSTEM_TYPE == "openwrt" ]]; then
+        /etc/init.d/openclash-manage start
     else
-        print_warning "⚠️  OpenClash 未安装或配置文件不存在"
-        print_message "请确保 OpenClash 已正确安装"
+        systemctl start openclash-manage
+    fi
+    
+    sleep 2
+    
+    # 检查服务状态
+    if [[ $SYSTEM_TYPE == "openwrt" ]]; then
+        if /etc/init.d/openclash-manage status >/dev/null 2>&1; then
+            print_message "✅ 服务启动成功"
+        else
+            print_warning "⚠️  服务启动可能失败，请手动检查"
+        fi
+    else
+        if systemctl is-active --quiet openclash-manage; then
+            print_message "✅ 服务启动成功"
+        else
+            print_warning "⚠️  服务启动可能失败，请手动检查"
+        fi
     fi
 }
 
@@ -220,22 +299,29 @@ show_result() {
     echo "   http://$(hostname -I | awk '{print $1}'):8080"
     echo ""
     echo "🔧 管理命令:"
-    echo "   启动服务: systemctl start openclash-manage"
-    echo "   停止服务: systemctl stop openclash-manage"
-    echo "   重启服务: systemctl restart openclash-manage"
-    echo "   查看状态: systemctl status openclash-manage"
+    if [[ $SYSTEM_TYPE == "openwrt" ]]; then
+        echo "   启动服务: /etc/init.d/openclash-manage start"
+        echo "   停止服务: /etc/init.d/openclash-manage stop"
+        echo "   重启服务: /etc/init.d/openclash-manage restart"
+        echo "   查看状态: /etc/init.d/openclash-manage status"
+    else
+        echo "   启动服务: systemctl start openclash-manage"
+        echo "   停止服务: systemctl stop openclash-manage"
+        echo "   重启服务: systemctl restart openclash-manage"
+        echo "   查看状态: systemctl status openclash-manage"
+    fi
     echo ""
     echo "📁 项目目录: /root/OpenClashManage"
     echo "📝 节点文件: /root/OpenClashManage/wangluo/nodes.txt"
     echo "📋 日志文件: /root/OpenClashManage/wangluo/log.txt"
     echo ""
-    echo "🚀 现在可以启动服务并访问管理面板了！"
+    echo "🚀 现在可以访问管理面板了！"
 }
 
 # 主函数
 main() {
     echo "=========================================="
-    echo "    OpenClash 管理面板一键安装脚本"
+    echo "    OpenClash 管理面板 - 一键安装"
     echo "=========================================="
     echo ""
     
@@ -248,7 +334,7 @@ main() {
     set_permissions
     create_service
     create_initial_config
-    check_openclash
+    start_service
     show_result
 }
 

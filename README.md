@@ -39,9 +39,21 @@ OpenClashManage/
 
 ## 🛠️ 安装和运行
 
-### OpenWrt 系统安装
+### 🚀 一键安装（推荐）
 
-#### 方法一：标准安装（推荐）
+#### 通用一键安装命令
+```bash
+curl -sSL https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install.sh | bash
+```
+
+#### 如果curl有问题，使用wget
+```bash
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install.sh | bash
+```
+
+### OpenWrt 系统专用安装
+
+#### 方法一：标准安装
 ```bash
 curl -sSL https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_openwrt_robust.sh | bash
 ```
