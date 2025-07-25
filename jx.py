@@ -61,6 +61,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
 
     for line in lines:
         try:
+            # Shadowsocks
             if line.startswith("ss://"):
                 raw = line[5:]
                 name = clean_name(extract_custom_name(line), existing_names)
@@ -107,6 +108,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                     })
                 success_count += 1
 
+            # VMess
             elif line.startswith("vmess://"):
                 decoded = decode_base64(line[8:].split("#")[0])
                 if not decoded:
@@ -132,6 +134,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 })
                 success_count += 1
 
+            # VLESS
             elif line.startswith("vless://"):
                 info = line[8:].split("#")[0]
                 name = clean_name(extract_custom_name(line), existing_names)
@@ -156,6 +159,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 })
                 success_count += 1
 
+            # Trojan
             elif line.startswith("trojan://"):
                 body = line[9:].split("#")[0]
                 parsed = urlparse("//" + body)
@@ -175,6 +179,196 @@ def parse_nodes(file_path: str) -> List[Dict]:
                     "alpn": query.get("alpn", []),
                     "skip-cert-verify": query.get("allowInsecure", ["false"])[0].lower() == "true"
                 })
+                success_count += 1
+
+            # HTTP代理
+            elif line.startswith("http://"):
+                parsed = urlparse(line)
+                host, port = parsed.hostname, parsed.port or 80
+                username = parsed.username or ""
+                password = parsed.password or ""
+                name = clean_name(extract_custom_name(line), existing_names)
+                
+                node = {
+                    "name": name,
+                    "type": "http",
+                    "server": host,
+                    "port": int(port)
+                }
+                if username and password:
+                    node.update({
+                        "username": username,
+                        "password": password
+                    })
+                parsed_nodes.append(node)
+                success_count += 1
+
+            # HTTPS代理
+            elif line.startswith("https://"):
+                parsed = urlparse(line)
+                host, port = parsed.hostname, parsed.port or 443
+                username = parsed.username or ""
+                password = parsed.password or ""
+                name = clean_name(extract_custom_name(line), existing_names)
+                
+                node = {
+                    "name": name,
+                    "type": "http",
+                    "server": host,
+                    "port": int(port),
+                    "tls": True
+                }
+                if username and password:
+                    node.update({
+                        "username": username,
+                        "password": password
+                    })
+                parsed_nodes.append(node)
+                success_count += 1
+
+            # SOCKS代理
+            elif line.startswith("socks://") or line.startswith("socks5://"):
+                parsed = urlparse(line)
+                host, port = parsed.hostname, parsed.port or 1080
+                username = parsed.username or ""
+                password = parsed.password or ""
+                name = clean_name(extract_custom_name(line), existing_names)
+                
+                node = {
+                    "name": name,
+                    "type": "socks5",
+                    "server": host,
+                    "port": int(port)
+                }
+                if username and password:
+                    node.update({
+                        "username": username,
+                        "password": password
+                    })
+                parsed_nodes.append(node)
+                success_count += 1
+
+            # ShadowsocksR
+            elif line.startswith("ssr://"):
+                decoded = decode_base64(line[6:].split("#")[0])
+                if not decoded:
+                    raise ValueError("Base64解码失败")
+                
+                # SSR格式: server:port:protocol:method:obfs:password_base64/?obfsparam=xxx&protoparam=xxx&remarks=xxx&group=xxx
+                parts = decoded.split("/?")
+                if len(parts) != 2:
+                    raise ValueError("SSR格式不正确")
+                
+                server_part = parts[0]
+                params_part = parts[1]
+                
+                # 解析服务器部分
+                server_parts = server_part.split(":")
+                if len(server_parts) < 6:
+                    raise ValueError("SSR服务器参数不足")
+                
+                host, port, protocol, method, obfs, password_b64 = server_parts[:6]
+                
+                # 解析参数
+                params = parse_qs(params_part)
+                remarks = unquote(params.get("remarks", [""])[0])
+                obfsparam = unquote(params.get("obfsparam", [""])[0])
+                protoparam = unquote(params.get("protoparam", [""])[0])
+                
+                name = clean_name(remarks or extract_custom_name(line), existing_names)
+                password = decode_base64(password_b64)
+                
+                parsed_nodes.append({
+                    "name": name,
+                    "type": "ssr",
+                    "server": host,
+                    "port": int(port),
+                    "cipher": method,
+                    "password": password,
+                    "protocol": protocol,
+                    "protocol-param": protoparam,
+                    "obfs": obfs,
+                    "obfs-param": obfsparam
+                })
+                success_count += 1
+
+            # Snell
+            elif line.startswith("snell://"):
+                parsed = urlparse(line)
+                host, port = parsed.hostname, parsed.port or 443
+                password = parsed.username or ""
+                query = parse_qs(parsed.query)
+                name = clean_name(extract_custom_name(line), existing_names)
+                
+                node = {
+                    "name": name,
+                    "type": "snell",
+                    "server": host,
+                    "port": int(port),
+                    "psk": password,
+                    "version": int(query.get("version", ["1"])[0])
+                }
+                
+                if query.get("obfs"):
+                    node["obfs-opts"] = {
+                        "mode": query["obfs"][0],
+                        "host": query.get("obfs-host", [""])[0]
+                    }
+                
+                parsed_nodes.append(node)
+                success_count += 1
+
+            # Hysteria
+            elif line.startswith("hysteria://"):
+                parsed = urlparse(line)
+                host, port = parsed.hostname, parsed.port or 443
+                query = parse_qs(parsed.query)
+                name = clean_name(extract_custom_name(line), existing_names)
+                
+                node = {
+                    "name": name,
+                    "type": "hysteria",
+                    "server": host,
+                    "port": int(port),
+                    "protocol": query.get("protocol", ["udp"])[0],
+                    "up_mbps": int(query.get("upmbps", ["10"])[0]),
+                    "down_mbps": int(query.get("downmbps", ["50"])[0])
+                }
+                
+                if query.get("auth"):
+                    node["auth"] = query["auth"][0]
+                if query.get("peer"):
+                    node["server_name"] = query["peer"][0]
+                if query.get("insecure"):
+                    node["skip-cert-verify"] = query["insecure"][0].lower() == "true"
+                
+                parsed_nodes.append(node)
+                success_count += 1
+
+            # TUIC
+            elif line.startswith("tuic://"):
+                parsed = urlparse(line)
+                host, port = parsed.hostname, parsed.port or 443
+                query = parse_qs(parsed.query)
+                name = clean_name(extract_custom_name(line), existing_names)
+                
+                node = {
+                    "name": name,
+                    "type": "tuic",
+                    "server": host,
+                    "port": int(port),
+                    "uuid": parsed.username,
+                    "password": parsed.password or "",
+                    "congestion_control": query.get("congestion_control", ["bbr"])[0],
+                    "udp_relay_mode": query.get("udp_relay_mode", ["native"])[0]
+                }
+                
+                if query.get("alpn"):
+                    node["alpn"] = query["alpn"]
+                if query.get("disable_sni"):
+                    node["disable_sni"] = query["disable_sni"][0].lower() == "true"
+                
+                parsed_nodes.append(node)
                 success_count += 1
 
             else:

@@ -193,6 +193,26 @@
             color: white;
         }
         
+        .node-type-ssr {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .node-type-snell {
+            background-color: #9b59b6;
+            color: white;
+        }
+        
+        .node-type-hysteria {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .node-type-tuic {
+            background-color: #1abc9c;
+            color: white;
+        }
+        
         .node-url {
             font-family: 'Courier New', monospace;
             font-size: 0.8rem;
@@ -1346,8 +1366,10 @@
             const typeLower = type.toLowerCase();
             
             // 常见协议的特殊样式
-            if (typeLower.includes('ss') || typeLower.includes('shadowsocks')) {
+            if (typeLower.includes('ss') && !typeLower.includes('ssr')) {
                 return 'node-type-ss';
+            } else if (typeLower.includes('ssr')) {
+                return 'node-type-ssr';
             } else if (typeLower.includes('vmess')) {
                 return 'node-type-vmess';
             } else if (typeLower.includes('vless')) {
@@ -1358,6 +1380,12 @@
                 return 'node-type-http';
             } else if (typeLower.includes('socks')) {
                 return 'node-type-socks';
+            } else if (typeLower.includes('snell')) {
+                return 'node-type-snell';
+            } else if (typeLower.includes('hysteria')) {
+                return 'node-type-hysteria';
+            } else if (typeLower.includes('tuic')) {
+                return 'node-type-tuic';
             } else {
                 // 默认样式
                 return 'node-type-default';
