@@ -50,8 +50,8 @@ def inject_groups(config, node_names: list) -> tuple:
         # 检查策略组类型，只处理需要代理的策略组
         group_type = group.get("type", "")
         if group_type in ["select", "url-test", "fallback", "load-balance"]:
-        # 过滤掉可能导致循环引用的节点名称
-        safe_names = [name for name in valid_names if name != group_name]
+            # 过滤掉可能导致循环引用的节点名称
+            safe_names = [name for name in valid_names if name != group_name]
             
             if safe_names:
                 # 保留原有的 REJECT 和 DIRECT，然后添加所有节点
@@ -60,10 +60,10 @@ def inject_groups(config, node_names: list) -> tuple:
                 updated = keep_proxies + safe_names
 
                 added = len([n for n in safe_names if n not in original_proxies])
-        group["proxies"] = updated
+                group["proxies"] = updated
 
-        injected_total += added
-        injected_groups += 1
+                injected_total += added
+                injected_groups += 1
                 write_log(f"✅ [zc] 策略组 [{group_name}] 注入 {added} 个节点")
             else:
                 write_log(f"⚠️ [zc] 策略组 [{group_name}] 没有有效节点可注入")
@@ -83,4 +83,4 @@ def inject_groups(config, node_names: list) -> tuple:
                 group["proxies"] = [p for p in proxies if p != group_name]
     
     write_log(f"🎯 [zc] 成功注入 {injected_groups} 个策略组，总计 {injected_total} 个节点，跳过非法节点 {skipped} 个，跳过策略组 {skipped_groups} 个\n")
-    return config, injected_total
+    return config, injected_total 
