@@ -20,8 +20,9 @@ def clean_name(name: str, existing_names: set) -> str:
     except:
         pass
     
-    # 移除特殊字符，保留中文、字母、数字、下划线、连字符
-    name = re.sub(r'[^一-龥a-zA-Z0-9_\-\.]', '', name.strip())
+    # 移除特殊字符，保留中文、字母、数字、下划线、连字符、点号
+    # 使用更宽松的正则表达式，只移除真正有害的字符
+    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.]', '', name.strip())
     
     # 如果名称为空或只包含特殊字符，使用默认名称
     if not name or name.isspace():
