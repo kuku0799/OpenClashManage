@@ -80,10 +80,13 @@ def extract_custom_name(link: str) -> str:
 
 def process_node_name(raw_name: str, existing_names: set) -> str:
     """处理节点名称，包括URL解码和清理"""
-    # 处理URL编码
+    # 处理URL编码 - 使用多重解码
     try:
-        decoded_name = unquote(raw_name)
-        if decoded_name != raw_name and len(decoded_name) > 0:
+        original_name = raw_name
+        for _ in range(3):  # 最多解码3次
+            decoded_name = unquote(raw_name)
+            if decoded_name == raw_name:  # 如果没有变化，说明已经解码完成
+                break
             raw_name = decoded_name
     except:
         pass
