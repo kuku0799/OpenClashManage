@@ -98,6 +98,44 @@ python3 app.py
 - **状态**: 实时显示守护进程运行状态
 
 ### 手动操作
+
+## 🗑️ 卸载功能
+
+### Linux/OpenWrt 系统卸载
+```bash
+# 下载并运行卸载脚本
+wget -qO- https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/uninstall.sh | bash
+
+# 或者直接运行
+bash uninstall.sh
+```
+
+### Windows 系统卸载
+```powershell
+# 下载并运行PowerShell卸载脚本
+Invoke-Expression (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/uninstall.ps1" -UseBasicParsing).Content
+
+# 或者直接运行
+.\uninstall.ps1
+```
+
+### 卸载功能说明
+- ✅ **完全清理**: 删除所有应用文件、服务、日志
+- ✅ **进程清理**: 自动停止和清理残留进程
+- ✅ **端口检查**: 检查并提示端口占用情况
+- ✅ **缓存清理**: 清理Python缓存文件
+- ✅ **安全确认**: 需要用户确认后才执行卸载
+- ✅ **重新安装**: 提供重新安装的指导信息
+
+### 调试模式
+如果需要快速卸载进行调试，可以使用：
+```bash
+# Linux/OpenWrt
+echo "y" | bash uninstall.sh
+
+# Windows PowerShell
+.\uninstall.ps1 -Force
+```
 - **手动同步**: 立即执行节点同步操作
 - **重启OpenClash**: 重启OpenClash服务
 - **清空日志**: 清空运行日志
