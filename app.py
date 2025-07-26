@@ -234,7 +234,7 @@ class OpenClashManager:
             subprocess.run("pkill -f 'jk.sh'", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
             if os.path.exists(PID_FILE):
-                os.remove(PID_FILE)
+                    os.remove(PID_FILE)
             
             self.watchdog_running = False
             write_log("✅ 守护进程已停止")
@@ -254,12 +254,12 @@ class OpenClashManager:
     def get_watchdog_status(self):
         """获取守护进程状态"""
         try:
-            if os.path.exists(PID_FILE):
-                with open(PID_FILE, 'r') as f:
-                    pid = f.read().strip()
-                if pid and self.check_process_running(pid):
-                    return True, pid
-            return False, None
+        if os.path.exists(PID_FILE):
+            with open(PID_FILE, 'r') as f:
+                pid = f.read().strip()
+            if pid and self.check_process_running(pid):
+                return True, pid
+        return False, None
         except:
             return False, None
     

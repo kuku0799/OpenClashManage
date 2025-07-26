@@ -273,6 +273,20 @@ def parse_nodes(file_path: str) -> List[Dict]:
                 if not host or not port:
                     raise ValueError("SOCKS5服务器地址或端口缺失")
                 
+                # 解码Base64编码的用户名和密码
+                try:
+                    if username:
+                        decoded_username = decode_base64(username)
+                        # 检查解码后的字符串是否包含冒号分隔的用户名和密码
+                        if ':' in decoded_username:
+                            username, password = decoded_username.split(':', 1)
+                        else:
+                            username = decoded_username
+                    if password:
+                        password = decode_base64(password)
+                except Exception as e:
+                    write_log(f"⚠️ [parse] SOCKS5认证信息解码失败: {e}")
+                
                 node = {
                     "name": name,
                     "type": "socks5",

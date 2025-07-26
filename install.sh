@@ -64,13 +64,13 @@ install_dependencies() {
     
     case $SYSTEM_TYPE in
         "openwrt")
-            # OpenWrt 依赖安装
-            opkg update
+        # OpenWrt 依赖安装
+        opkg update
             opkg install python3 python3-pip python3-yaml curl wget
             ;;
         "debian")
-            # Debian/Ubuntu 依赖安装
-            apt update
+        # Debian/Ubuntu 依赖安装
+        apt update
             apt install -y python3 python3-pip python3-yaml curl wget
             ;;
         "centos")
@@ -216,9 +216,9 @@ EOF
         print_message "✓ OpenWrt服务创建完成"
     else
         # 其他系统的systemd服务
-        SERVICE_FILE="/etc/systemd/system/openclash-manage.service"
-        
-        cat > "$SERVICE_FILE" << EOF
+    SERVICE_FILE="/etc/systemd/system/openclash-manage.service"
+    
+    cat > "$SERVICE_FILE" << EOF
 [Unit]
 Description=OpenClash Management Panel
 After=network.target
@@ -235,9 +235,9 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-        systemctl daemon-reload
+    systemctl daemon-reload
         systemctl enable openclash-manage
-        
+    
         print_message "✓ Systemd服务创建完成"
     fi
 }
@@ -276,7 +276,7 @@ start_service() {
     if [[ $SYSTEM_TYPE == "openwrt" ]]; then
         if /etc/init.d/openclash-manage status >/dev/null 2>&1; then
             print_message "✅ 服务启动成功"
-        else
+    else
             print_warning "⚠️  服务启动可能失败，请手动检查"
         fi
     else
@@ -305,10 +305,10 @@ show_result() {
         echo "   重启服务: /etc/init.d/openclash-manage restart"
         echo "   查看状态: /etc/init.d/openclash-manage status"
     else
-        echo "   启动服务: systemctl start openclash-manage"
-        echo "   停止服务: systemctl stop openclash-manage"
-        echo "   重启服务: systemctl restart openclash-manage"
-        echo "   查看状态: systemctl status openclash-manage"
+    echo "   启动服务: systemctl start openclash-manage"
+    echo "   停止服务: systemctl stop openclash-manage"
+    echo "   重启服务: systemctl restart openclash-manage"
+    echo "   查看状态: systemctl status openclash-manage"
     fi
     echo ""
     echo "📁 项目目录: /root/OpenClashManage"

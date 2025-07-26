@@ -8,3 +8,4 @@ ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试节点1
 vmess://eyJhZGQiOiIxOTIuMTY4LjEuMTAwIiwicG9ydCI6IjgwODAiLCJpZCI6IjEyMzQ1Njc4OTAiLCJuZXQiOiJ3cyIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==#测试节点2
 vless://12345678-1234-1234-1234-123456789012@192.168.1.100:443?security=tls&type=ws#测试节点3
 trojan://password@192.168.1.100:443#测试节点4
+socks://dXNlcmI6cGFzc3dvcmRi@iplc.hulicn.com:40533#ccccc

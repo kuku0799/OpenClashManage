@@ -500,8 +500,8 @@
             <!-- 头部 -->
             <div class="header d-flex justify-content-between align-items-center">
                 <div>
-                    <h1><i class="bi bi-shield-check"></i> OpenClash 节点管理面板</h1>
-                    <p class="mb-0">自动化节点同步与管理工具</p>
+                <h1><i class="bi bi-shield-check"></i> OpenClash 节点管理面板</h1>
+                <p class="mb-0">自动化节点同步与管理工具</p>
                 </div>
                 <div>
                     <button class="btn btn-outline-primary" id="theme-toggle" onclick="toggleTheme()">
@@ -655,11 +655,11 @@
                                         
                                         <!-- 手动输入 -->
                                         <div id="manualInput" class="import-section">
-                                            <div class="mb-3">
-                                                <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
-                                                                                            <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
+                                <div class="mb-3">
+                                    <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
+                                    <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
                                                       placeholder="# 在此粘贴你的节点链接，一行一个，支持全协议节点">{{ nodes_content }}</textarea>
-                                            </div>
+                                </div>
                                         </div>
                                         
                                         <!-- 文件导入 -->
@@ -703,13 +703,13 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="action-buttons">
-                                            <button class="btn btn-primary btn-custom" onclick="saveNodes()">
-                                                <i class="bi bi-save"></i> 保存节点
-                                            </button>
-                                            <button class="btn btn-secondary btn-custom" onclick="clearNodes()">
-                                                <i class="bi bi-trash"></i> 清空节点
-                                            </button>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-custom" onclick="saveNodes()">
+                                        <i class="bi bi-save"></i> 保存节点
+                                    </button>
+                                    <button class="btn btn-secondary btn-custom" onclick="clearNodes()">
+                                        <i class="bi bi-trash"></i> 清空节点
+                                    </button>
                                         </div>
                                     </div>
                                 </div>

@@ -116,7 +116,7 @@ install_openwrt_deps() {
     
     # 更新软件包列表
     print_message "更新软件包列表..."
-    opkg update
+        opkg update
     
     # 检查并安装最小化的Python环境
     print_message "安装Python环境..."
@@ -206,7 +206,7 @@ download_files() {
         fi
         
         if [[ $? -eq 0 ]]; then
-            print_message "✓ $file 下载成功"
+        print_message "✓ $file 下载成功"
         else
             print_error "✗ $file 下载失败"
             exit 1
@@ -250,7 +250,7 @@ install_python_deps_alternative() {
             print_message "✅ Flask安装成功"
         else
             print_warning "⚠️  Flask安装失败，将使用内置模块"
-        fi
+    fi
     fi
     
     # 检查yaml模块
