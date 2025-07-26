@@ -14,22 +14,30 @@ def decode_base64(data: str) -> str:
         return ""
 
 def clean_name(name: str, existing_names: set) -> str:
-    # 处理URL编码的节点名称
+    # 处理URL编码的节点名称 - 多次解码
     try:
-        name = unquote(name)
+        original_name = name
+        for _ in range(3):  # 最多解码3次
+            decoded_name = unquote(name)
+            if decoded_name == name:  # 如果没有变化，说明已经解码完成
+                break
+            name = decoded_name
     except:
         pass
     
-    # 移除特殊字符，保留中文、字母、数字、下划线、连字符、点号
-    # 使用更宽松的正则表达式，只移除真正有害的字符
-    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.]', '', name.strip())
+    # 移除特殊字符，保留中文、字母、数字、下划线、连字符、点号、空格
+    # 使用更宽松的正则表达式，保留更多有用字符
+    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.\s]', '', name.strip())
+    
+    # 清理多余的空格
+    name = re.sub(r'\s+', ' ', name).strip()
     
     # 如果名称为空或只包含特殊字符，使用默认名称
     if not name or name.isspace():
         name = "Unnamed"
     
     # 限制长度
-    name = name[:24]
+    name = name[:30]  # 增加长度限制
     
     original = name
     count = 1
@@ -43,13 +51,31 @@ def extract_custom_name(link: str) -> str:
     match = re.search(r'#(.+)', link)
     if match:
         name = match.group(1)
-        # 处理URL编码的节点名称
+        # 处理URL编码的节点名称 - 多次解码确保完全解码
         try:
-            name = unquote(name)
+            # 多次解码，处理多重编码的情况
+            original_name = name
+            for _ in range(3):  # 最多解码3次
+                decoded_name = unquote(name)
+                if decoded_name == name:  # 如果没有变化，说明已经解码完成
+                    break
+                name = decoded_name
         except:
             pass
+        
+        # 处理括号内的名称
         bracket_match = re.search(r'[（(](.*?)[)）]', name)
-        return bracket_match.group(1) if bracket_match else name
+        if bracket_match:
+            return bracket_match.group(1)
+        
+        # 如果名称仍然包含URL编码，尝试进一步清理
+        if '%' in name:
+            try:
+                name = unquote(name)
+            except:
+                pass
+        
+        return name
     return "Unnamed"
 
 def process_node_name(raw_name: str, existing_names: set) -> str:
