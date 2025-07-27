@@ -211,7 +211,7 @@
         }
         
         .node-type-tuic {
-            background-color: #1abc9c;
+            background-color: #ff6b9d;
             color: white;
         }
         
@@ -492,6 +492,51 @@
                 width: 100%;
             }
         }
+        
+        /* 编辑对话框样式 */
+        .modal-lg {
+            max-width: 800px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+            color: white;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+        }
+        
+        /* 批量编辑样式 */
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        /* 节点操作按钮悬停效果 */
+        .node-actions .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -605,6 +650,9 @@
                                                 <button class="btn btn-sm btn-outline-info" onclick="showNodeGroups()" title="分组查看">
                                                     <i class="bi bi-collection"></i> 分组
                                                 </button>
+                                                <button class="btn btn-sm btn-outline-warning" onclick="editSelectedNode()" title="编辑选中节点">
+                                                    <i class="bi bi-pencil"></i> 编辑
+                                                </button>
                                                 <button class="btn btn-sm btn-outline-primary" onclick="refreshNodesList()" title="刷新列表">
                                                     <i class="bi bi-arrow-clockwise"></i> 刷新
                                                 </button>
@@ -636,9 +684,14 @@
                                         <div class="mb-4">
                                             <h6 class="mb-3">选择导入方式：</h6>
                                             <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check" name="importType" id="manualImport" value="manual" checked>
+                                                <input type="radio" class="btn-check" name="importType" id="singleAdd" value="single" checked>
+                                                <label class="btn btn-outline-primary" for="singleAdd">
+                                                    <i class="bi bi-plus-circle"></i> 手动添加
+                                                </label>
+                                                
+                                                <input type="radio" class="btn-check" name="importType" id="manualImport" value="manual">
                                                 <label class="btn btn-outline-primary" for="manualImport">
-                                                    <i class="bi bi-pencil"></i> 手动输入
+                                                    <i class="bi bi-pencil"></i> 批量输入
                                                 </label>
                                                 
                                                 <input type="radio" class="btn-check" name="importType" id="fileImport" value="file">
@@ -653,8 +706,141 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- 手动输入 -->
-                                        <div id="manualInput" class="import-section">
+                                        <!-- 手动单个添加 -->
+                                        <div id="singleAddInput" class="import-section">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="mb-3">节点基本信息</h6>
+                                                    <div class="mb-3">
+                                                        <label for="single-node-name" class="form-label">节点名称</label>
+                                                        <input type="text" class="form-control" id="single-node-name" 
+                                                               placeholder="输入节点名称" maxlength="50">
+                                                        <div class="form-text">支持中文、英文、数字等字符</div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-server" class="form-label">服务器地址</label>
+                                                        <input type="text" class="form-control" id="single-server" 
+                                                               placeholder="服务器IP或域名">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-port" class="form-label">端口</label>
+                                                        <input type="number" class="form-control" id="single-port" 
+                                                               placeholder="端口号" min="1" max="65535">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-password" class="form-label">密码</label>
+                                                        <input type="text" class="form-control" id="single-password" 
+                                                               placeholder="节点密码">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-uuid" class="form-label">UUID (VMess/VLESS)</label>
+                                                        <input type="text" class="form-control" id="single-uuid" 
+                                                               placeholder="UUID">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-path" class="form-label">路径 (WebSocket/HTTP)</label>
+                                                        <input type="text" class="form-control" id="single-path" 
+                                                               placeholder="/path">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-tls" class="form-label">TLS设置</label>
+                                                        <select class="form-select" id="single-tls">
+                                                            <option value="false">关闭</option>
+                                                            <option value="true">开启</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-tags" class="form-label">标签</label>
+                                                        <input type="text" class="form-control" id="single-tags" 
+                                                               placeholder="标签1,标签2,标签3">
+                                                        <div class="form-text">用逗号分隔多个标签</div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-remarks" class="form-label">备注</label>
+                                                        <textarea class="form-control" id="single-remarks" rows="2" 
+                                                                  placeholder="节点备注信息"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="mb-3">协议设置</h6>
+                                                    <div class="mb-3">
+                                                        <label for="single-protocol" class="form-label">协议类型</label>
+                                                        <select class="form-select" id="single-protocol" onchange="updateProtocolFields()">
+                                                            <option value="ss">Shadowsocks (SS)</option>
+                                                            <option value="vmess">VMess</option>
+                                                            <option value="vless">VLESS</option>
+                                                            <option value="trojan">Trojan</option>
+                                                            <option value="http">HTTP</option>
+                                                            <option value="socks">SOCKS</option>
+                                                            <option value="ssr">ShadowsocksR (SSR)</option>
+                                                            <option value="snell">Snell</option>
+                                                            <option value="hysteria">Hysteria</option>
+                                                            <option value="tuic">TUIC</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-method" class="form-label">加密方法</label>
+                                                        <select class="form-select" id="single-method">
+                                                            <option value="aes-256-gcm">aes-256-gcm</option>
+                                                            <option value="aes-128-gcm">aes-128-gcm</option>
+                                                            <option value="chacha20-poly1305">chacha20-poly1305</option>
+                                                            <option value="aes-256-cfb">aes-256-cfb</option>
+                                                            <option value="aes-128-cfb">aes-128-cfb</option>
+                                                            <option value="chacha20">chacha20</option>
+                                                            <option value="rc4-md5">rc4-md5</option>
+                                                            <option value="none">none</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-network" class="form-label">传输协议</label>
+                                                        <select class="form-select" id="single-network">
+                                                            <option value="tcp">TCP</option>
+                                                            <option value="ws">WebSocket</option>
+                                                            <option value="http">HTTP</option>
+                                                            <option value="quic">QUIC</option>
+                                                            <option value="grpc">gRPC</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-host" class="form-label">伪装域名</label>
+                                                        <input type="text" class="form-control" id="single-host" 
+                                                               placeholder="伪装域名">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-sni" class="form-label">SNI</label>
+                                                        <input type="text" class="form-control" id="single-sni" 
+                                                               placeholder="SNI域名">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="single-original-link" class="form-label">原始链接</label>
+                                                        <textarea class="form-control" id="single-original-link" rows="3" 
+                                                                  placeholder="如果已有节点链接，可以粘贴在这里" readonly></textarea>
+                                                        <div class="form-text">原始节点链接 (只读)</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col-12">
+                                                    <div class="d-flex gap-2">
+                                                        <button class="btn btn-primary" onclick="addSingleNode()">
+                                                            <i class="bi bi-plus-circle"></i> 添加节点
+                                                        </button>
+                                                        <button class="btn btn-info" onclick="testSingleNode()">
+                                                            <i class="bi bi-lightning"></i> 测试节点
+                                                        </button>
+                                                        <button class="btn btn-secondary" onclick="clearSingleForm()">
+                                                            <i class="bi bi-arrow-clockwise"></i> 清空表单
+                                                        </button>
+                                                        <button class="btn btn-outline-secondary" onclick="parseFromLink()">
+                                                            <i class="bi bi-link-45deg"></i> 从链接解析
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 批量输入 -->
+                                        <div id="manualInput" class="import-section" style="display: none;">
                                 <div class="mb-3">
                                     <label for="nodes-textarea" class="form-label">节点链接（一行一个）</label>
                                     <textarea class="form-control nodes-textarea" id="nodes-textarea" rows="12" 
@@ -758,6 +944,225 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 节点编辑对话框 -->
+    <div class="modal fade" id="nodeEditModal" tabindex="-1" aria-labelledby="nodeEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nodeEditModalLabel">
+                        <i class="bi bi-pencil-square"></i> 编辑节点
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nodeEditForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeName" class="form-label">节点名称</label>
+                                    <input type="text" class="form-control" id="editNodeName" placeholder="输入节点名称">
+                                    <div class="form-text">支持中文、英文、数字等字符</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeType" class="form-label">协议类型</label>
+                                    <select class="form-select" id="editNodeType" disabled>
+                                        <option value="ss">Shadowsocks (SS)</option>
+                                        <option value="vmess">VMess</option>
+                                        <option value="vless">VLESS</option>
+                                        <option value="trojan">Trojan</option>
+                                        <option value="http">HTTP</option>
+                                        <option value="socks">SOCKS5</option>
+                                        <option value="ssr">ShadowsocksR (SSR)</option>
+                                        <option value="snell">Snell</option>
+                                        <option value="hysteria">Hysteria</option>
+                                        <option value="tuic">TUIC</option>
+                                    </select>
+                                    <div class="form-text">协议类型不可修改</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeServer" class="form-label">服务器地址</label>
+                                    <input type="text" class="form-control" id="editNodeServer" placeholder="服务器IP或域名">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodePort" class="form-label">端口</label>
+                                    <input type="number" class="form-control" id="editNodePort" placeholder="端口号" min="1" max="65535">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodePassword" class="form-label">密码</label>
+                                    <input type="password" class="form-control" id="editNodePassword" placeholder="节点密码">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeMethod" class="form-label">加密方法</label>
+                                    <select class="form-select" id="editNodeMethod">
+                                        <option value="aes-256-gcm">aes-256-gcm</option>
+                                        <option value="aes-128-gcm">aes-128-gcm</option>
+                                        <option value="chacha20-poly1305">chacha20-poly1305</option>
+                                        <option value="auto">auto</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeUUID" class="form-label">UUID (VMess/VLESS)</label>
+                                    <input type="text" class="form-control" id="editNodeUUID" placeholder="UUID">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeNetwork" class="form-label">传输协议</label>
+                                    <select class="form-select" id="editNodeNetwork">
+                                        <option value="tcp">TCP</option>
+                                        <option value="ws">WebSocket</option>
+                                        <option value="http">HTTP/2</option>
+                                        <option value="grpc">gRPC</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodePath" class="form-label">路径 (WebSocket/HTTP)</label>
+                                    <input type="text" class="form-control" id="editNodePath" placeholder="/path">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeHost" class="form-label">伪装域名</label>
+                                    <input type="text" class="form-control" id="editNodeHost" placeholder="伪装域名">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeTLS" class="form-label">TLS设置</label>
+                                    <select class="form-select" id="editNodeTLS">
+                                        <option value="false">关闭</option>
+                                        <option value="true">开启</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editNodeSNI" class="form-label">SNI</label>
+                                    <input type="text" class="form-control" id="editNodeSNI" placeholder="SNI域名">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editNodeTags" class="form-label">标签</label>
+                            <input type="text" class="form-control" id="editNodeTags" placeholder="标签1,标签2,标签3">
+                            <div class="form-text">用逗号分隔多个标签</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editNodeRemarks" class="form-label">备注</label>
+                            <textarea class="form-control" id="editNodeRemarks" rows="3" placeholder="节点备注信息"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editNodeOriginal" class="form-label">原始链接</label>
+                            <textarea class="form-control" id="editNodeOriginal" rows="2" readonly></textarea>
+                            <div class="form-text">原始节点链接（只读）</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> 取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveNodeEdit()">
+                        <i class="bi bi-check-circle"></i> 保存
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="testEditedNode()">
+                        <i class="bi bi-speedometer2"></i> 测试
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 批量编辑对话框 -->
+    <div class="modal fade" id="batchEditModal" tabindex="-1" aria-labelledby="batchEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="batchEditModalLabel">
+                        <i class="bi bi-pencil-square"></i> 批量编辑节点
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        将修改选中节点的以下属性：
+                    </div>
+                    
+                    <form id="batchEditForm">
+                        <div class="mb-3">
+                            <label for="batchNodeTags" class="form-label">添加标签</label>
+                            <input type="text" class="form-control" id="batchNodeTags" placeholder="标签1,标签2,标签3">
+                            <div class="form-text">为所有选中节点添加标签</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="batchNodeRemarks" class="form-label">添加备注</label>
+                            <textarea class="form-control" id="batchNodeRemarks" rows="2" placeholder="为所有选中节点添加备注"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="batchNodePrefix" class="form-label">名称前缀</label>
+                            <input type="text" class="form-control" id="batchNodePrefix" placeholder="前缀">
+                            <div class="form-text">为所有选中节点的名称添加前缀</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="batchNodeSuffix" class="form-label">名称后缀</label>
+                            <input type="text" class="form-control" id="batchNodeSuffix" placeholder="后缀">
+                            <div class="form-text">为所有选中节点的名称添加后缀</div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            注意：批量编辑将修改 <span id="batchEditCount">0</span> 个节点
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> 取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveBatchEdit()">
+                        <i class="bi bi-check-circle"></i> 保存
+                    </button>
                 </div>
             </div>
         </div>
@@ -1040,7 +1445,19 @@
                 filteredNodes = [...allNodes];
             } else {
                 filteredNodes = allNodes.filter(node => {
-                    const nodeName = (node.name || '').toLowerCase();
+                    // URL解码节点名称用于搜索
+                    let nodeName = (node.name || '').toLowerCase();
+                    try {
+                        // 多次解码，处理多重编码的情况
+                        for (let i = 0; i < 3; i++) {
+                            const decoded = decodeURIComponent(nodeName);
+                            if (decoded === nodeName) break; // 如果没有变化，说明已经解码完成
+                            nodeName = decoded;
+                        }
+                    } catch (e) {
+                        console.warn('URL解码失败:', e);
+                    }
+                    
                     const nodeType = node.type.toLowerCase();
                     const nodeUrl = node.url.toLowerCase();
                     
@@ -1093,6 +1510,9 @@
             });
             
             switch(importType) {
+                case 'single':
+                    document.getElementById('singleAddInput').style.display = 'block';
+                    break;
                 case 'manual':
                     document.getElementById('manualInput').style.display = 'block';
                     break;
@@ -1174,7 +1594,7 @@
             
             lines.forEach((line, index) => {
                 line = line.trim();
-                if (line && !line.startswith('#')) {
+                if (line && !line.startsWith('#')) {
                     // 验证节点格式 - 支持所有协议
                     const isValid = line.includes('://') && line.length > 10;
                     
@@ -1330,7 +1750,18 @@
             let html = '<div class="nodes-list">';
             nodes.forEach((node, index) => {
                 const nodeTypeClass = getNodeTypeClass(node.type);
-                const nodeName = node.name || `节点 ${index + 1}`;
+                // URL解码节点名称
+                let nodeName = node.name || `节点 ${index + 1}`;
+                try {
+                    // 多次解码，处理多重编码的情况
+                    for (let i = 0; i < 3; i++) {
+                        const decoded = decodeURIComponent(nodeName);
+                        if (decoded === nodeName) break; // 如果没有变化，说明已经解码完成
+                        nodeName = decoded;
+                    }
+                } catch (e) {
+                    console.warn('URL解码失败:', e);
+                }
                 const isSelected = selectedNodes.has(node.index);
                 
                 html += `
@@ -1349,6 +1780,9 @@
                             </div>
                         </div>
                         <div class="node-actions">
+                            <button class="btn btn-sm btn-outline-warning me-1" onclick="editSingleNode(${node.index})" title="编辑">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                             <button class="btn btn-sm btn-outline-info me-1" onclick="testNodeSpeed(${node.index})" title="测速">
                                 <i class="bi bi-speedometer2"></i>
                             </button>
@@ -1580,12 +2014,586 @@
                 });
             }
         }
+
+        // 编辑选中节点
+        function editSelectedNode() {
+            if (selectedNodes.size === 0) {
+                showToast('请先选择要编辑的节点', 'warning');
+                return;
+            }
+            
+            if (selectedNodes.size > 1) {
+                // 如果选择了多个节点，显示批量编辑对话框
+                showBatchEditModal();
+                return;
+            }
+            
+            const indices = Array.from(selectedNodes);
+            const nodeToEdit = allNodes.find(node => node.index === indices[0]);
+            
+            if (!nodeToEdit) {
+                showToast('未找到要编辑的节点', 'warning');
+                return;
+            }
+            
+            // 显示单个节点编辑对话框
+            showNodeEditModal(nodeToEdit);
+        }
+        
+        // 显示节点编辑对话框
+        function showNodeEditModal(node) {
+            // 解析节点信息并填充表单
+            const nodeInfo = parseNodeInfo(node.full_line);
+            
+            // 填充表单字段
+            document.getElementById('editNodeName').value = nodeInfo.name || '';
+            document.getElementById('editNodeType').value = nodeInfo.type || 'ss';
+            document.getElementById('editNodeServer').value = nodeInfo.server || '';
+            document.getElementById('editNodePort').value = nodeInfo.port || '';
+            document.getElementById('editNodePassword').value = nodeInfo.password || '';
+            document.getElementById('editNodeMethod').value = nodeInfo.method || 'aes-256-gcm';
+            document.getElementById('editNodeUUID').value = nodeInfo.uuid || '';
+            document.getElementById('editNodeNetwork').value = nodeInfo.network || 'tcp';
+            document.getElementById('editNodePath').value = nodeInfo.path || '';
+            document.getElementById('editNodeHost').value = nodeInfo.host || '';
+            document.getElementById('editNodeTLS').value = nodeInfo.tls || 'false';
+            document.getElementById('editNodeSNI').value = nodeInfo.sni || '';
+            document.getElementById('editNodeTags').value = nodeInfo.tags || '';
+            document.getElementById('editNodeRemarks').value = nodeInfo.remarks || '';
+            document.getElementById('editNodeOriginal').value = node.full_line;
+            
+            // 存储当前编辑的节点信息
+            window.currentEditingNode = node;
+            
+            // 显示对话框
+            const modal = new bootstrap.Modal(document.getElementById('nodeEditModal'));
+            modal.show();
+        }
+        
+        // 解析节点信息
+        function parseNodeInfo(nodeLine) {
+            const info = {};
+            
+            // 提取节点名称并进行URL解码
+            if (nodeLine.includes('#')) {
+                const parts = nodeLine.split('#');
+                let nodeName = parts[1] || '';
+                
+                // URL解码节点名称
+                try {
+                    // 多次解码，处理多重编码的情况
+                    for (let i = 0; i < 3; i++) {
+                        const decoded = decodeURIComponent(nodeName);
+                        if (decoded === nodeName) break; // 如果没有变化，说明已经解码完成
+                        nodeName = decoded;
+                    }
+                } catch (e) {
+                    console.warn('URL解码失败:', e);
+                }
+                
+                info.name = nodeName;
+            }
+            
+            // 提取协议类型
+            if (nodeLine.includes('://')) {
+                info.type = nodeLine.split('://')[0];
+            }
+            
+            // 这里可以添加更详细的解析逻辑
+            // 根据不同的协议类型解析不同的参数
+            
+            return info;
+        }
+        
+        // 保存节点编辑
+        function saveNodeEdit() {
+            const form = document.getElementById('nodeEditForm');
+            const formData = new FormData(form);
+            
+            // 构建新的节点链接
+            const nodeInfo = {
+                name: document.getElementById('editNodeName').value,
+                type: document.getElementById('editNodeType').value,
+                server: document.getElementById('editNodeServer').value,
+                port: document.getElementById('editNodePort').value,
+                password: document.getElementById('editNodePassword').value,
+                method: document.getElementById('editNodeMethod').value,
+                uuid: document.getElementById('editNodeUUID').value,
+                network: document.getElementById('editNodeNetwork').value,
+                path: document.getElementById('editNodePath').value,
+                host: document.getElementById('editNodeHost').value,
+                tls: document.getElementById('editNodeTLS').value,
+                sni: document.getElementById('editNodeSNI').value,
+                tags: document.getElementById('editNodeTags').value,
+                remarks: document.getElementById('editNodeRemarks').value
+            };
+            
+            // 生成新的节点链接
+            const newNodeLine = generateNodeLink(nodeInfo);
+            
+            if (!newNodeLine) {
+                showToast('节点信息不完整，请检查必填字段', 'warning');
+                return;
+            }
+            
+            // 发送到服务器保存
+            fetch('/api/update_node', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    index: window.currentEditingNode.index,
+                    new_line: newNodeLine
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('节点编辑成功', 'success');
+                    // 关闭对话框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('nodeEditModal'));
+                    modal.hide();
+                    // 刷新节点列表
+                    setTimeout(() => {
+                        loadNodesList();
+                        updateStatus();
+                    }, 1000);
+                } else {
+                    showToast(data.message || '节点编辑失败', 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('节点编辑失败: ' + error, 'danger');
+            });
+        }
+        
+        // 生成节点链接
+        function generateNodeLink(nodeInfo) {
+            // 这里实现根据协议类型生成节点链接的逻辑
+            // 这是一个简化的实现，实际需要根据不同的协议类型生成不同的链接格式
+            
+            let link = '';
+            
+            switch (nodeInfo.type) {
+                case 'ss':
+                    // Shadowsocks 链接格式
+                    if (nodeInfo.server && nodeInfo.port && nodeInfo.password && nodeInfo.method) {
+                        const encoded = btoa(`${nodeInfo.method}:${nodeInfo.password}`);
+                        link = `ss://${encoded}@${nodeInfo.server}:${nodeInfo.port}`;
+                    }
+                    break;
+                case 'vmess':
+                    // VMess 链接格式
+                    if (nodeInfo.server && nodeInfo.port && nodeInfo.uuid) {
+                        const vmessConfig = {
+                            v: "2",
+                            ps: nodeInfo.name,
+                            add: nodeInfo.server,
+                            port: nodeInfo.port,
+                            id: nodeInfo.uuid,
+                            aid: "0",
+                            net: nodeInfo.network || "tcp",
+                            type: "none",
+                            host: nodeInfo.host || "",
+                            path: nodeInfo.path || "",
+                            tls: nodeInfo.tls === "true" ? "tls" : ""
+                        };
+                        const encoded = btoa(JSON.stringify(vmessConfig));
+                        link = `vmess://${encoded}`;
+                    }
+                    break;
+                // 可以添加其他协议的支持
+                default:
+                    showToast(`暂不支持 ${nodeInfo.type} 协议的编辑`, 'warning');
+                    return null;
+            }
+            
+            // 添加节点名称
+            if (nodeInfo.name) {
+                link += `#${nodeInfo.name}`;
+            }
+            
+            return link;
+        }
+        
+        // 测试编辑后的节点
+        function testEditedNode() {
+            showToast('节点测试功能开发中...', 'info');
+        }
+        
+        // 显示批量编辑对话框
+        function showBatchEditModal() {
+            document.getElementById('batchEditCount').textContent = selectedNodes.size;
+            
+            // 清空表单
+            document.getElementById('batchEditForm').reset();
+            
+            // 显示对话框
+            const modal = new bootstrap.Modal(document.getElementById('batchEditModal'));
+            modal.show();
+        }
+        
+        // 保存批量编辑
+        function saveBatchEdit() {
+            const tags = document.getElementById('batchNodeTags').value;
+            const remarks = document.getElementById('batchNodeRemarks').value;
+            const prefix = document.getElementById('batchNodePrefix').value;
+            const suffix = document.getElementById('batchNodeSuffix').value;
+            
+            if (!tags && !remarks && !prefix && !suffix) {
+                showToast('请至少填写一个修改项', 'warning');
+                return;
+            }
+            
+            const indices = Array.from(selectedNodes);
+            
+            fetch('/api/batch_update_nodes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    indices: indices,
+                    tags: tags,
+                    remarks: remarks,
+                    prefix: prefix,
+                    suffix: suffix
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`批量编辑成功，修改了 ${data.updated_count} 个节点`, 'success');
+                    // 关闭对话框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('batchEditModal'));
+                    modal.hide();
+                    // 刷新节点列表
+                    setTimeout(() => {
+                        loadNodesList();
+                        updateStatus();
+                        selectedNodes.clear();
+                        updateNodesStats();
+                    }, 1000);
+                } else {
+                    showToast(data.message || '批量编辑失败', 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('批量编辑失败: ' + error, 'danger');
+            });
+        }
         
         // 页面卸载时清理定时器
         window.addEventListener('beforeunload', function() {
             if (statusUpdateInterval) {
                 clearInterval(statusUpdateInterval);
             }
+        });
+        
+        // 编辑单个节点
+        function editSingleNode(index) {
+            const nodeToEdit = allNodes.find(node => node.index === index);
+            
+            if (!nodeToEdit) {
+                showToast('未找到要编辑的节点', 'warning');
+                return;
+            }
+            
+            // 显示节点编辑对话框
+            showNodeEditModal(nodeToEdit);
+        }
+        
+        // 手动单个节点添加相关函数
+        
+        // 更新协议字段显示
+        function updateProtocolFields() {
+            const protocol = document.getElementById('single-protocol').value;
+            const methodField = document.getElementById('single-method');
+            const uuidField = document.getElementById('single-uuid');
+            const passwordField = document.getElementById('single-password');
+            
+            // 根据协议类型显示/隐藏相关字段
+            switch(protocol) {
+                case 'ss':
+                    methodField.parentElement.style.display = 'block';
+                    uuidField.parentElement.style.display = 'none';
+                    passwordField.parentElement.style.display = 'block';
+                    break;
+                case 'vmess':
+                case 'vless':
+                    methodField.parentElement.style.display = 'none';
+                    uuidField.parentElement.style.display = 'block';
+                    passwordField.parentElement.style.display = 'none';
+                    break;
+                case 'trojan':
+                    methodField.parentElement.style.display = 'none';
+                    uuidField.parentElement.style.display = 'none';
+                    passwordField.parentElement.style.display = 'block';
+                    break;
+                default:
+                    methodField.parentElement.style.display = 'block';
+                    uuidField.parentElement.style.display = 'none';
+                    passwordField.parentElement.style.display = 'block';
+            }
+        }
+        
+        // 添加单个节点
+        function addSingleNode() {
+            const nodeData = {
+                name: document.getElementById('single-node-name').value.trim(),
+                server: document.getElementById('single-server').value.trim(),
+                port: document.getElementById('single-port').value.trim(),
+                password: document.getElementById('single-password').value.trim(),
+                uuid: document.getElementById('single-uuid').value.trim(),
+                method: document.getElementById('single-method').value,
+                protocol: document.getElementById('single-protocol').value,
+                network: document.getElementById('single-network').value,
+                path: document.getElementById('single-path').value.trim(),
+                host: document.getElementById('single-host').value.trim(),
+                tls: document.getElementById('single-tls').value === 'true',
+                sni: document.getElementById('single-sni').value.trim(),
+                tags: document.getElementById('single-tags').value.trim(),
+                remarks: document.getElementById('single-remarks').value.trim()
+            };
+            
+            // 验证必填字段
+            if (!nodeData.name) {
+                showToast('请输入节点名称', 'warning');
+                return;
+            }
+            if (!nodeData.server) {
+                showToast('请输入服务器地址', 'warning');
+                return;
+            }
+            if (!nodeData.port) {
+                showToast('请输入端口号', 'warning');
+                return;
+            }
+            
+            // 根据协议验证其他字段
+            if (nodeData.protocol === 'ss' && !nodeData.password) {
+                showToast('SS协议需要输入密码', 'warning');
+                return;
+            }
+            if ((nodeData.protocol === 'vmess' || nodeData.protocol === 'vless') && !nodeData.uuid) {
+                showToast('VMess/VLESS协议需要输入UUID', 'warning');
+                return;
+            }
+            if (nodeData.protocol === 'trojan' && !nodeData.password) {
+                showToast('Trojan协议需要输入密码', 'warning');
+                return;
+            }
+            
+            // 生成节点链接
+            const nodeLink = generateSingleNodeLink(nodeData);
+            if (!nodeLink) {
+                showToast('生成节点链接失败', 'danger');
+                return;
+            }
+            
+            // 添加到节点列表
+            fetch('/api/add_single_node', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    node_link: nodeLink
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('节点添加成功', 'success');
+                    clearSingleForm();
+                    // 刷新节点列表
+                    setTimeout(() => {
+                        loadNodesList();
+                        updateStatus();
+                    }, 1000);
+                } else {
+                    showToast(data.message || '节点添加失败', 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('节点添加失败: ' + error, 'danger');
+            });
+        }
+        
+        // 生成单个节点链接
+        function generateSingleNodeLink(nodeData) {
+            let link = '';
+            
+            switch(nodeData.protocol) {
+                case 'ss':
+                    // SS格式: ss://method:password@server:port#name
+                    const ssPassword = btoa(nodeData.password);
+                    link = `ss://${nodeData.method}:${ssPassword}@${nodeData.server}:${nodeData.port}`;
+                    break;
+                case 'vmess':
+                    // VMess格式: vmess://uuid@server:port?type=network&path=path&host=host&tls=tls#name
+                    const vmessConfig = {
+                        v: "2",
+                        ps: nodeData.name,
+                        add: nodeData.server,
+                        port: nodeData.port,
+                        id: nodeData.uuid,
+                        aid: "0",
+                        net: nodeData.network,
+                        type: "none",
+                        host: nodeData.host,
+                        path: nodeData.path,
+                        tls: nodeData.tls ? "tls" : "none"
+                    };
+                    const vmessJson = JSON.stringify(vmessConfig);
+                    link = `vmess://${btoa(vmessJson)}`;
+                    break;
+                case 'vless':
+                    // VLESS格式: vless://uuid@server:port?type=network&path=path&host=host&security=tls#name
+                    link = `vless://${nodeData.uuid}@${nodeData.server}:${nodeData.port}?type=${nodeData.network}`;
+                    if (nodeData.path) link += `&path=${encodeURIComponent(nodeData.path)}`;
+                    if (nodeData.host) link += `&host=${nodeData.host}`;
+                    if (nodeData.tls) link += `&security=tls`;
+                    if (nodeData.sni) link += `&sni=${nodeData.sni}`;
+                    break;
+                case 'trojan':
+                    // Trojan格式: trojan://password@server:port?security=tls&sni=sni#name
+                    link = `trojan://${nodeData.password}@${nodeData.server}:${nodeData.port}`;
+                    if (nodeData.tls) {
+                        link += `?security=tls`;
+                        if (nodeData.sni) link += `&sni=${nodeData.sni}`;
+                    }
+                    break;
+                default:
+                    showToast('不支持的协议类型', 'warning');
+                    return null;
+            }
+            
+            // 添加节点名称
+            if (nodeData.name) {
+                link += `#${nodeData.name}`;
+            }
+            
+            return link;
+        }
+        
+        // 测试单个节点
+        function testSingleNode() {
+            const nodeData = {
+                name: document.getElementById('single-node-name').value.trim(),
+                server: document.getElementById('single-server').value.trim(),
+                port: document.getElementById('single-port').value.trim(),
+                password: document.getElementById('single-password').value.trim(),
+                uuid: document.getElementById('single-uuid').value.trim(),
+                method: document.getElementById('single-method').value,
+                protocol: document.getElementById('single-protocol').value,
+                network: document.getElementById('single-network').value,
+                path: document.getElementById('single-path').value.trim(),
+                host: document.getElementById('single-host').value.trim(),
+                tls: document.getElementById('single-tls').value === 'true',
+                sni: document.getElementById('single-sni').value.trim(),
+                tags: document.getElementById('single-tags').value.trim(),
+                remarks: document.getElementById('single-remarks').value.trim()
+            };
+            
+            // 验证必填字段
+            if (!nodeData.name) {
+                showToast('请输入节点名称', 'warning');
+                return;
+            }
+            if (!nodeData.server) {
+                showToast('请输入服务器地址', 'warning');
+                return;
+            }
+            if (!nodeData.port) {
+                showToast('请输入端口号', 'warning');
+                return;
+            }
+            
+            const nodeLink = generateSingleNodeLink(nodeData);
+            if (nodeLink) {
+                document.getElementById('single-original-link').value = nodeLink;
+                showToast('节点链接生成成功，已显示在原始链接框中', 'success');
+            } else {
+                showToast('节点链接生成失败', 'danger');
+            }
+        }
+        
+        // 清空单个节点表单
+        function clearSingleForm() {
+            document.getElementById('single-node-name').value = '';
+            document.getElementById('single-server').value = '';
+            document.getElementById('single-port').value = '';
+            document.getElementById('single-password').value = '';
+            document.getElementById('single-uuid').value = '';
+            document.getElementById('single-path').value = '';
+            document.getElementById('single-host').value = '';
+            document.getElementById('single-sni').value = '';
+            document.getElementById('single-tags').value = '';
+            document.getElementById('single-remarks').value = '';
+            document.getElementById('single-original-link').value = '';
+            document.getElementById('single-protocol').value = 'ss';
+            document.getElementById('single-method').value = 'aes-256-gcm';
+            document.getElementById('single-network').value = 'tcp';
+            document.getElementById('single-tls').value = 'false';
+            
+            // 更新字段显示
+            updateProtocolFields();
+            
+            showToast('表单已清空', 'info');
+        }
+        
+        // 从链接解析节点信息
+        function parseFromLink() {
+            const link = prompt('请输入节点链接:');
+            if (!link) return;
+            
+            // 这里可以调用后端的解析接口
+            fetch('/api/parse_node_link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    link: link
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 填充表单
+                    const nodeInfo = data.node_info;
+                    document.getElementById('single-node-name').value = nodeInfo.name || '';
+                    document.getElementById('single-server').value = nodeInfo.server || '';
+                    document.getElementById('single-port').value = nodeInfo.port || '';
+                    document.getElementById('single-password').value = nodeInfo.password || '';
+                    document.getElementById('single-uuid').value = nodeInfo.uuid || '';
+                    document.getElementById('single-protocol').value = nodeInfo.protocol || 'ss';
+                    document.getElementById('single-method').value = nodeInfo.method || 'aes-256-gcm';
+                    document.getElementById('single-network').value = nodeInfo.network || 'tcp';
+                    document.getElementById('single-path').value = nodeInfo.path || '';
+                    document.getElementById('single-host').value = nodeInfo.host || '';
+                    document.getElementById('single-tls').value = nodeInfo.tls ? 'true' : 'false';
+                    document.getElementById('single-sni').value = nodeInfo.sni || '';
+                    document.getElementById('single-original-link').value = link;
+                    
+                    // 更新字段显示
+                    updateProtocolFields();
+                    
+                    showToast('节点信息解析成功', 'success');
+                } else {
+                    showToast(data.message || '节点链接解析失败', 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('节点链接解析失败: ' + error, 'danger');
+            });
+        }
+        
+        // 初始化协议字段显示
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProtocolFields();
         });
     </script>
 </body>

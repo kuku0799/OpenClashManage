@@ -66,6 +66,20 @@ class OpenClashManager:
                 parts = line.split('#', 1)
                 node_url = parts[0].strip()
                 node_name = parts[1].strip() if len(parts) > 1 else ""
+                
+                # 处理URL编码的节点名称
+                if node_name:
+                    try:
+                        from urllib.parse import unquote
+                        # 多次解码，处理多重编码的情况
+                        original_name = node_name
+                        for _ in range(3):  # 最多解码3次
+                            decoded_name = unquote(node_name)
+                            if decoded_name == node_name:  # 如果没有变化，说明已经解码完成
+                                break
+                            node_name = decoded_name
+                    except Exception as e:
+                        write_log(f"⚠️ URL解码失败: {e}")
             else:
                 node_url = line
             
@@ -254,12 +268,12 @@ class OpenClashManager:
     def get_watchdog_status(self):
         """获取守护进程状态"""
         try:
-        if os.path.exists(PID_FILE):
-            with open(PID_FILE, 'r') as f:
-                pid = f.read().strip()
-            if pid and self.check_process_running(pid):
-                return True, pid
-        return False, None
+            if os.path.exists(PID_FILE):
+                with open(PID_FILE, 'r') as f:
+                    pid = f.read().strip()
+                if pid and self.check_process_running(pid):
+                    return True, pid
+            return False, None
         except:
             return False, None
     
@@ -574,29 +588,519 @@ def import_nodes():
 
 @app.route('/api/validate_node', methods=['POST'])
 def validate_node():
-    """验证单个节点格式"""
+    """验证节点格式"""
     try:
         data = request.get_json()
-        node_url = data.get('url', '').strip()
+        node_line = data.get('node_line', '').strip()
         
-        if not node_url:
-            return jsonify({'success': False, 'message': '节点URL不能为空'})
+        if not node_line:
+            return jsonify({'success': False, 'message': '节点链接为空'})
         
-        # 验证节点格式 - 支持所有协议
-        is_valid = '://' in node_url and len(node_url) > 10
+        # 基本格式验证
+        if '://' not in node_line:
+            return jsonify({'success': False, 'message': '无效的节点链接格式'})
         
-        if is_valid:
-            node_type = manager.get_node_type(node_url)
-            return jsonify({
-                'success': True, 
-                'message': '节点格式正确',
-                'type': node_type
-            })
+        # 协议验证
+        protocol = node_line.split('://')[0].lower()
+        valid_protocols = ['ss', 'vmess', 'vless', 'trojan', 'http', 'https', 'socks', 'socks5', 'ssr', 'snell', 'hysteria', 'tuic']
+        
+        if protocol not in valid_protocols:
+            return jsonify({'success': False, 'message': f'不支持的协议: {protocol}'})
+        
+        return jsonify({'success': True, 'message': '节点格式验证通过'})
+        
+    except Exception as e:
+        write_log(f"❌ 节点验证失败: {e}")
+        return jsonify({'success': False, 'message': f'验证失败: {e}'})
+
+@app.route('/api/update_node', methods=['POST'])
+def update_node():
+    """更新单个节点"""
+    try:
+        data = request.get_json()
+        node_index = data.get('index')
+        new_line = data.get('new_line', '').strip()
+        
+        if node_index is None:
+            return jsonify({'success': False, 'message': '缺少节点索引'})
+        
+        if not new_line:
+            return jsonify({'success': False, 'message': '新的节点链接为空'})
+        
+        # 验证新节点格式
+        if '://' not in new_line:
+            return jsonify({'success': False, 'message': '无效的节点链接格式'})
+        
+        # 读取当前节点文件
+        content = manager.get_nodes_content()
+        lines = content.split('\n')
+        
+        # 找到实际的节点行（跳过注释和空行）
+        node_lines = []
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if line and not line.startswith('#'):
+                node_lines.append((i, line))
+        
+        if node_index >= len(node_lines):
+            return jsonify({'success': False, 'message': '节点索引超出范围'})
+        
+        # 获取要更新的行号
+        line_index, _ = node_lines[node_index]
+        
+        # 更新该行
+        lines[line_index] = new_line
+        
+        # 保存更新后的内容
+        new_content = '\n'.join(lines)
+        if manager.save_nodes_content(new_content):
+            write_log(f"✅ 节点 #{node_index + 1} 已更新")
+            return jsonify({'success': True, 'message': f'节点 #{node_index + 1} 更新成功'})
         else:
-            return jsonify({'success': False, 'message': '不支持的节点格式'})
+            return jsonify({'success': False, 'message': '保存节点文件失败'})
             
     except Exception as e:
-        return jsonify({'success': False, 'message': f'验证节点失败: {e}'})
+        write_log(f"❌ 更新节点失败: {e}")
+        return jsonify({'success': False, 'message': f'更新节点失败: {e}'})
+
+@app.route('/api/batch_update_nodes', methods=['POST'])
+def batch_update_nodes():
+    """批量更新节点"""
+    try:
+        data = request.get_json()
+        indices = data.get('indices', [])
+        tags = data.get('tags', '').strip()
+        remarks = data.get('remarks', '').strip()
+        prefix = data.get('prefix', '').strip()
+        suffix = data.get('suffix', '').strip()
+        
+        if not indices:
+            return jsonify({'success': False, 'message': '缺少节点索引'})
+        
+        if not tags and not remarks and not prefix and not suffix:
+            return jsonify({'success': False, 'message': '至少需要指定一个修改项'})
+        
+        # 读取当前节点文件
+        content = manager.get_nodes_content()
+        lines = content.split('\n')
+        
+        # 找到实际的节点行（跳过注释和空行）
+        node_lines = []
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if line and not line.startswith('#'):
+                node_lines.append((i, line))
+        
+        updated_count = 0
+        
+        # 更新选中的节点
+        for node_index in indices:
+            if node_index >= len(node_lines):
+                continue
+            
+            line_index, original_line = node_lines[node_index]
+            
+            # 解析原始节点
+            parts = original_line.split('#', 1)
+            node_url = parts[0].strip()
+            node_name = parts[1].strip() if len(parts) > 1 else ""
+            
+            # 应用修改
+            new_name = node_name
+            
+            if prefix:
+                new_name = prefix + new_name
+            
+            if suffix:
+                new_name = new_name + suffix
+            
+            # 构建新的节点行
+            new_line = node_url
+            if new_name:
+                new_line += f"#{new_name}"
+            
+            # 更新行
+            lines[line_index] = new_line
+            updated_count += 1
+        
+        # 保存更新后的内容
+        new_content = '\n'.join(lines)
+        if manager.save_nodes_content(new_content):
+            write_log(f"✅ 批量更新了 {updated_count} 个节点")
+            return jsonify({
+                'success': True, 
+                'message': f'批量更新成功', 
+                'updated_count': updated_count
+            })
+        else:
+            return jsonify({'success': False, 'message': '保存节点文件失败'})
+            
+    except Exception as e:
+        write_log(f"❌ 批量更新节点失败: {e}")
+        return jsonify({'success': False, 'message': f'批量更新失败: {e}'})
+
+@app.route('/api/add_single_node', methods=['POST'])
+def add_single_node():
+    """添加单个节点"""
+    try:
+        data = request.get_json()
+        node_link = data.get('node_link', '').strip()
+        
+        if not node_link:
+            return jsonify({'success': False, 'message': '节点链接不能为空'})
+        
+        # 验证节点格式
+        if not manager.is_valid_node_url(node_link):
+            return jsonify({'success': False, 'message': '节点链接格式无效'})
+        
+        # 读取当前节点文件
+        content = manager.get_nodes_content()
+        lines = content.split('\n')
+        
+        # 添加新节点到文件末尾
+        lines.append(node_link)
+        
+        # 保存更新后的内容
+        new_content = '\n'.join(lines)
+        if manager.save_nodes_content(new_content):
+            write_log(f"✅ 手动添加节点成功: {node_link.split('#')[-1] if '#' in node_link else '未命名节点'}")
+            return jsonify({'success': True, 'message': '节点添加成功'})
+        else:
+            return jsonify({'success': False, 'message': '保存节点文件失败'})
+            
+    except Exception as e:
+        write_log(f"❌ 添加单个节点失败: {e}")
+        return jsonify({'success': False, 'message': f'添加节点失败: {e}'})
+
+@app.route('/api/parse_node_link', methods=['POST'])
+def parse_node_link():
+    """解析节点链接"""
+    try:
+        data = request.get_json()
+        link = data.get('link', '').strip()
+        
+        write_log(f"🔍 API收到链接: {link}")
+        
+        if not link:
+            return jsonify({'success': False, 'message': '节点链接不能为空'})
+        
+        # 使用改进的解析功能
+        node_info = parse_single_node_link(link)
+        
+        write_log(f"🔍 API解析结果: {node_info}")
+        
+        if node_info:
+            response_data = {
+                'success': True, 
+                'node_info': node_info
+            }
+            write_log(f"🔍 API返回数据: {response_data}")
+            return jsonify(response_data)
+        else:
+            return jsonify({'success': False, 'message': '无法解析节点链接'})
+            
+    except Exception as e:
+        write_log(f"❌ 解析节点链接失败: {e}")
+        return jsonify({'success': False, 'message': f'解析节点链接失败: {e}'})
+
+def parse_single_node_link(link: str) -> dict:
+    """解析单个节点链接"""
+    try:
+        from urllib.parse import unquote, urlparse, parse_qs
+        import base64
+        import json
+        import re
+        
+        node_info = {}
+        
+        # 分离节点URL和名称
+        if '#' in link:
+            node_url, node_name = link.split('#', 1)
+            # URL解码节点名称
+            try:
+                original_name = node_name.strip()
+                for _ in range(3):  # 最多解码3次
+                    decoded_name = unquote(original_name)
+                    if decoded_name == original_name:
+                        break
+                    original_name = decoded_name
+                node_info['name'] = original_name
+            except:
+                node_info['name'] = node_name.strip()
+        else:
+            node_url = link
+            node_info['name'] = ''
+        
+        # 添加调试信息
+        write_log(f"🔍 开始解析链接: {link}")
+        write_log(f"🔍 节点URL: {node_url}")
+        write_log(f"🔍 节点名称: {node_info.get('name', '')}")
+        
+        # 解析协议类型和详细信息
+        if node_url.startswith('ss://'):
+            node_info['protocol'] = 'ss'
+            write_log(f"🔍 开始解析SS链接")
+            # 解析SS链接: ss://method:password@server:port
+            try:
+                # 移除ss://前缀
+                ss_content = node_url[5:]
+                write_log(f"🔍 SS内容: {ss_content}")
+                # 分离认证信息和服务器信息
+                if '@' in ss_content:
+                    auth_part, server_part = ss_content.split('@', 1)
+                    write_log(f"🔍 认证部分: {auth_part}")
+                    write_log(f"🔍 服务器部分: {server_part}")
+                    
+                    # 解析服务器信息（优先处理）
+                    if ':' in server_part:
+                        server, port = server_part.split(':', 1)
+                        node_info['server'] = server
+                        node_info['port'] = port
+                        write_log(f"🔍 解析到服务器: {server}, 端口: {port}")
+                    else:
+                        node_info['server'] = server_part
+                        node_info['port'] = '8388'
+                        write_log(f"🔍 解析到服务器: {server_part}, 默认端口: 8388")
+                    
+                    # 解析认证信息 - SS的认证部分是Base64编码的method:password
+                    try:
+                        # 解码Base64认证信息
+                        auth_decoded = base64.b64decode(auth_part + '=' * (-len(auth_part) % 4)).decode()
+                        write_log(f"🔍 解码后的认证信息: {auth_decoded}")
+                        if ':' in auth_decoded:
+                            method, password = auth_decoded.split(':', 1)
+                            node_info['method'] = method
+                            node_info['password'] = password
+                            write_log(f"🔍 解析到方法: {method}, 密码: {password}")
+                        else:
+                            node_info['method'] = 'aes-256-gcm'
+                            node_info['password'] = auth_decoded
+                            write_log(f"🔍 使用默认方法: aes-256-gcm, 密码: {auth_decoded}")
+                    except Exception as e:
+                        write_log(f"⚠️ Base64解码失败: {e}")
+                        # 如果解码失败，使用默认值
+                        node_info['method'] = 'aes-256-gcm'
+                        node_info['password'] = auth_part
+                        write_log(f"🔍 使用默认方法: aes-256-gcm, 密码: {auth_part}")
+                else:
+                    write_log(f"⚠️ 没有找到@分隔符")
+                    # 没有认证信息的情况
+                    if ':' in ss_content:
+                        server, port = ss_content.split(':', 1)
+                        node_info['server'] = server
+                        node_info['port'] = port
+                        write_log(f"🔍 解析到服务器: {server}, 端口: {port}")
+                    else:
+                        node_info['server'] = ss_content
+                        node_info['port'] = '8388'
+                        write_log(f"🔍 解析到服务器: {ss_content}, 默认端口: 8388")
+                    node_info['method'] = 'aes-256-gcm'
+                    node_info['password'] = ''
+                    write_log(f"🔍 使用默认方法: aes-256-gcm, 空密码")
+            except Exception as e:
+                write_log(f"⚠️ SS链接解析失败: {e}")
+                # 设置默认值
+                node_info['server'] = '192.168.1.100'
+                node_info['port'] = '8388'
+                node_info['method'] = 'aes-256-gcm'
+                node_info['password'] = ''
+                write_log(f"🔍 使用默认值: server=192.168.1.100, port=8388")
+                
+        elif node_url.startswith('vmess://'):
+            node_info['protocol'] = 'vmess'
+            # 解析VMess链接: vmess://base64(json)
+            try:
+                # 移除vmess://前缀
+                vmess_content = node_url[8:]
+                # 解码base64
+                vmess_json = base64.b64decode(vmess_content + '=' * (-len(vmess_content) % 4)).decode()
+                vmess_config = json.loads(vmess_json)
+                
+                node_info['server'] = vmess_config.get('add', '')
+                node_info['port'] = str(vmess_config.get('port', ''))
+                node_info['uuid'] = vmess_config.get('id', '')
+                node_info['network'] = vmess_config.get('net', 'tcp')
+                node_info['path'] = vmess_config.get('path', '')
+                node_info['host'] = vmess_config.get('host', '')
+                node_info['tls'] = vmess_config.get('tls', 'none') == 'tls'
+                
+            except Exception as e:
+                write_log(f"⚠️ VMess链接解析失败: {e}")
+                # 尝试简单的解析
+                try:
+                    # 移除vmess://前缀
+                    vmess_content = node_url[8:]
+                    # 尝试解码base64
+                    vmess_json = base64.b64decode(vmess_content + '=' * (-len(vmess_content) % 4)).decode()
+                    vmess_config = json.loads(vmess_json)
+                    
+                    node_info['server'] = vmess_config.get('add', '192.168.1.100')
+                    node_info['port'] = str(vmess_config.get('port', '8080'))
+                    node_info['uuid'] = vmess_config.get('id', '')
+                    node_info['network'] = vmess_config.get('net', 'tcp')
+                    node_info['path'] = vmess_config.get('path', '')
+                    node_info['host'] = vmess_config.get('host', '')
+                    node_info['tls'] = vmess_config.get('tls', 'none') == 'tls'
+                except:
+                    node_info['server'] = '192.168.1.100'
+                    node_info['port'] = '8080'
+                    node_info['uuid'] = ''
+                    node_info['network'] = 'tcp'
+                    node_info['path'] = ''
+                    node_info['host'] = ''
+                    node_info['tls'] = False
+                
+        elif node_url.startswith('vless://'):
+            node_info['protocol'] = 'vless'
+            # 解析VLESS链接: vless://uuid@server:port?type=network&path=path&host=host&security=tls
+            try:
+                # 移除vless://前缀
+                vless_content = node_url[8:]
+                # 分离UUID和服务器信息
+                if '@' in vless_content:
+                    uuid, server_part = vless_content.split('@', 1)
+                    node_info['uuid'] = uuid
+                    
+                    # 分离服务器地址和查询参数
+                    if '?' in server_part:
+                        server_port, query = server_part.split('?', 1)
+                        # 解析查询参数
+                        params = parse_qs(query)
+                        node_info['network'] = params.get('type', ['tcp'])[0]
+                        node_info['path'] = params.get('path', [''])[0]
+                        node_info['host'] = params.get('host', [''])[0]
+                        node_info['tls'] = params.get('security', ['none'])[0] == 'tls'
+                        node_info['sni'] = params.get('sni', [''])[0]
+                    else:
+                        server_port = server_part
+                        node_info['network'] = 'tcp'
+                        node_info['path'] = ''
+                        node_info['host'] = ''
+                        node_info['tls'] = False
+                        node_info['sni'] = ''
+                    
+                    # 解析服务器地址和端口
+                    if ':' in server_port:
+                        server, port = server_port.split(':', 1)
+                        node_info['server'] = server
+                        node_info['port'] = port
+                    else:
+                        node_info['server'] = server_port
+                        node_info['port'] = '443'
+                else:
+                    node_info['uuid'] = ''
+                    node_info['server'] = 'unknown'
+                    node_info['port'] = '443'
+                    node_info['network'] = 'tcp'
+                    node_info['path'] = ''
+                    node_info['host'] = ''
+                    node_info['tls'] = False
+                    node_info['sni'] = ''
+                    
+            except Exception as e:
+                write_log(f"⚠️ VLESS链接解析失败: {e}")
+                node_info['protocol'] = 'vless'
+                node_info['uuid'] = ''
+                node_info['server'] = 'unknown'
+                node_info['port'] = '443'
+                node_info['network'] = 'tcp'
+                node_info['path'] = ''
+                node_info['host'] = ''
+                node_info['tls'] = False
+                node_info['sni'] = ''
+                
+        elif node_url.startswith('trojan://'):
+            node_info['protocol'] = 'trojan'
+            # 解析Trojan链接: trojan://password@server:port?security=tls&sni=sni
+            try:
+                # 移除trojan://前缀
+                trojan_content = node_url[9:]
+                # 分离密码和服务器信息
+                if '@' in trojan_content:
+                    password, server_part = trojan_content.split('@', 1)
+                    node_info['password'] = password
+                    
+                    # 分离服务器地址和查询参数
+                    if '?' in server_part:
+                        server_port, query = server_part.split('?', 1)
+                        # 解析查询参数
+                        params = parse_qs(query)
+                        node_info['tls'] = params.get('security', ['none'])[0] == 'tls'
+                        node_info['sni'] = params.get('sni', [''])[0]
+                    else:
+                        server_port = server_part
+                        node_info['tls'] = False
+                        node_info['sni'] = ''
+                    
+                    # 解析服务器地址和端口
+                    if ':' in server_port:
+                        server, port = server_port.split(':', 1)
+                        node_info['server'] = server
+                        node_info['port'] = port
+                    else:
+                        node_info['server'] = server_port
+                        node_info['port'] = '443'
+                else:
+                    node_info['password'] = ''
+                    node_info['server'] = 'unknown'
+                    node_info['port'] = '443'
+                    node_info['tls'] = False
+                    node_info['sni'] = ''
+                    
+            except Exception as e:
+                write_log(f"⚠️ Trojan链接解析失败: {e}")
+                node_info['protocol'] = 'trojan'
+                node_info['password'] = ''
+                node_info['server'] = 'unknown'
+                node_info['port'] = '443'
+                node_info['tls'] = False
+                node_info['sni'] = ''
+                
+        else:
+            node_info['protocol'] = 'unknown'
+            node_info['server'] = 'unknown'
+            node_info['port'] = '8080'
+        
+        # 设置默认值
+        node_info.setdefault('method', 'aes-256-gcm')
+        node_info.setdefault('network', 'tcp')
+        node_info.setdefault('path', '')
+        node_info.setdefault('host', '')
+        node_info.setdefault('tls', False)
+        node_info.setdefault('sni', '')
+        node_info.setdefault('password', '')
+        node_info.setdefault('uuid', '')
+        
+        # 确保服务器和端口有值
+        if 'server' not in node_info or node_info['server'] == 'unknown' or node_info['server'] == '':
+            node_info['server'] = '192.168.1.100'
+        if 'port' not in node_info or node_info['port'] == 'unknown' or node_info['port'] == '':
+            if node_info['protocol'] == 'ss':
+                node_info['port'] = '8388'
+            elif node_info['protocol'] in ['vmess', 'vless']:
+                node_info['port'] = '443'
+            elif node_info['protocol'] == 'trojan':
+                node_info['port'] = '443'
+            else:
+                node_info['port'] = '8080'
+        
+        # 添加调试信息
+        write_log(f"🔍 解析结果: {node_info}")
+        
+        # 确保所有必要字段都存在
+        required_fields = ['protocol', 'server', 'port', 'name']
+        for field in required_fields:
+            if field not in node_info:
+                write_log(f"⚠️ 缺少字段: {field}")
+            else:
+                write_log(f"✅ 字段 {field}: {node_info[field]}")
+        
+        write_log(f"🔍 最终返回的node_info: {node_info}")
+        return node_info
+        
+    except Exception as e:
+        write_log(f"❌ 解析节点链接时出错: {e}")
+        return None
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8888, debug=False) 

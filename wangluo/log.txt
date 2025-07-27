@@ -1,0 +1,96 @@
+2025-07-27 16:45:00 🔍 开始解析链接: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点
+2025-07-27 16:45:00 🔍 节点URL: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388
+2025-07-27 16:45:00 🔍 节点名称: 测试SS节点
+2025-07-27 16:45:00 🔍 开始解析SS链接
+2025-07-27 16:45:00 🔍 SS内容: YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388
+2025-07-27 16:45:00 🔍 认证部分: YWVzLTI1Ni1nY206cGFzc3dvcmQ=
+2025-07-27 16:45:00 🔍 服务器部分: 192.168.1.100:8388
+2025-07-27 16:45:00 🔍 解析到服务器: 192.168.1.100, 端口: 8388
+2025-07-27 16:45:00 🔍 解码后的认证信息: aes-256-gcm:password
+2025-07-27 16:45:00 🔍 解析到方法: aes-256-gcm, 密码: password
+2025-07-27 16:45:00 🔍 解析结果: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:45:00 ✅ 字段 protocol: ss
+2025-07-27 16:45:00 ✅ 字段 server: 192.168.1.100
+2025-07-27 16:45:00 ✅ 字段 port: 8388
+2025-07-27 16:45:00 ✅ 字段 name: 测试SS节点
+2025-07-27 16:45:00 🔍 最终返回的node_info: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:47:56 🔍 API收到链接: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点
+2025-07-27 16:47:56 🔍 开始解析链接: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点
+2025-07-27 16:47:56 🔍 节点URL: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388
+2025-07-27 16:47:56 🔍 节点名称: 测试SS节点
+2025-07-27 16:47:56 🔍 开始解析SS链接
+2025-07-27 16:47:56 🔍 SS内容: YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388
+2025-07-27 16:47:56 🔍 认证部分: YWVzLTI1Ni1nY206cGFzc3dvcmQ=
+2025-07-27 16:47:56 🔍 服务器部分: 192.168.1.100:8388
+2025-07-27 16:47:56 🔍 解析到服务器: 192.168.1.100, 端口: 8388
+2025-07-27 16:47:56 🔍 解码后的认证信息: aes-256-gcm:password
+2025-07-27 16:47:56 🔍 解析到方法: aes-256-gcm, 密码: password
+2025-07-27 16:47:56 🔍 解析结果: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:47:56 ✅ 字段 protocol: ss
+2025-07-27 16:47:56 ✅ 字段 server: 192.168.1.100
+2025-07-27 16:47:56 ✅ 字段 port: 8388
+2025-07-27 16:47:56 ✅ 字段 name: 测试SS节点
+2025-07-27 16:47:56 🔍 最终返回的node_info: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:47:56 🔍 API解析结果: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:47:56 🔍 API返回数据: {'success': True, 'node_info': {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}}
+2025-07-27 16:49:35 🔍 API收到链接: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点
+2025-07-27 16:49:35 🔍 开始解析链接: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点
+2025-07-27 16:49:35 🔍 节点URL: ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388
+2025-07-27 16:49:35 🔍 节点名称: 测试SS节点
+2025-07-27 16:49:35 🔍 开始解析SS链接
+2025-07-27 16:49:35 🔍 SS内容: YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388
+2025-07-27 16:49:35 🔍 认证部分: YWVzLTI1Ni1nY206cGFzc3dvcmQ=
+2025-07-27 16:49:35 🔍 服务器部分: 192.168.1.100:8388
+2025-07-27 16:49:35 🔍 解析到服务器: 192.168.1.100, 端口: 8388
+2025-07-27 16:49:35 🔍 解码后的认证信息: aes-256-gcm:password
+2025-07-27 16:49:35 🔍 解析到方法: aes-256-gcm, 密码: password
+2025-07-27 16:49:35 🔍 解析结果: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:49:35 ✅ 字段 protocol: ss
+2025-07-27 16:49:35 ✅ 字段 server: 192.168.1.100
+2025-07-27 16:49:35 ✅ 字段 port: 8388
+2025-07-27 16:49:35 ✅ 字段 name: 测试SS节点
+2025-07-27 16:49:35 🔍 最终返回的node_info: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:49:35 🔍 API解析结果: {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}
+2025-07-27 16:49:35 🔍 API返回数据: {'success': True, 'node_info': {'name': '测试SS节点', 'protocol': 'ss', 'server': '192.168.1.100', 'port': '8388', 'method': 'aes-256-gcm', 'password': 'password', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'sni': '', 'uuid': ''}}
+2025-07-27 16:49:35 🔍 API收到链接: vmess://eyJhZGQiOiIxOTIuMTY4LjEuMTAwIiwiYWlkIjoiMCIsImhvc3QiOiIiLCJpZCI6IjEyMzQ1Njc4LTkwYWItMTFlYi1hYzE1LTAwMDAwMDAwMDAwMCIsImluZ3Jlc3MiOlt7Im5hbWUiOiIiLCJwb3J0IjowLCJwcm90b2NvbCI6IiIsInNldHRpbmdzIjp7fSwidHlwZSI6Imh0dHAifV0sIm5ldCI6InRjcCIsInBvcnQiOjgwODAsInByb3RvY29sIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9#测试VMess节点
+2025-07-27 16:49:35 🔍 开始解析链接: vmess://eyJhZGQiOiIxOTIuMTY4LjEuMTAwIiwiYWlkIjoiMCIsImhvc3QiOiIiLCJpZCI6IjEyMzQ1Njc4LTkwYWItMTFlYi1hYzE1LTAwMDAwMDAwMDAwMCIsImluZ3Jlc3MiOlt7Im5hbWUiOiIiLCJwb3J0IjowLCJwcm90b2NvbCI6IiIsInNldHRpbmdzIjp7fSwidHlwZSI6Imh0dHAifV0sIm5ldCI6InRjcCIsInBvcnQiOjgwODAsInByb3RvY29sIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9#测试VMess节点
+2025-07-27 16:49:35 🔍 节点URL: vmess://eyJhZGQiOiIxOTIuMTY4LjEuMTAwIiwiYWlkIjoiMCIsImhvc3QiOiIiLCJpZCI6IjEyMzQ1Njc4LTkwYWItMTFlYi1hYzE1LTAwMDAwMDAwMDAwMCIsImluZ3Jlc3MiOlt7Im5hbWUiOiIiLCJwb3J0IjowLCJwcm90b2NvbCI6IiIsInNldHRpbmdzIjp7fSwidHlwZSI6Imh0dHAifV0sIm5ldCI6InRjcCIsInBvcnQiOjgwODAsInByb3RvY29sIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9
+2025-07-27 16:49:35 🔍 节点名称: 测试VMess节点
+2025-07-27 16:49:35 🔍 解析结果: {'name': '测试VMess节点', 'protocol': 'vmess', 'server': '192.168.1.100', 'port': '8080', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'method': 'aes-256-gcm', 'sni': '', 'password': ''}
+2025-07-27 16:49:35 ✅ 字段 protocol: vmess
+2025-07-27 16:49:35 ✅ 字段 server: 192.168.1.100
+2025-07-27 16:49:35 ✅ 字段 port: 8080
+2025-07-27 16:49:35 ✅ 字段 name: 测试VMess节点
+2025-07-27 16:49:35 🔍 最终返回的node_info: {'name': '测试VMess节点', 'protocol': 'vmess', 'server': '192.168.1.100', 'port': '8080', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'method': 'aes-256-gcm', 'sni': '', 'password': ''}
+2025-07-27 16:49:35 🔍 API解析结果: {'name': '测试VMess节点', 'protocol': 'vmess', 'server': '192.168.1.100', 'port': '8080', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'method': 'aes-256-gcm', 'sni': '', 'password': ''}
+2025-07-27 16:49:35 🔍 API返回数据: {'success': True, 'node_info': {'name': '测试VMess节点', 'protocol': 'vmess', 'server': '192.168.1.100', 'port': '8080', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': False, 'method': 'aes-256-gcm', 'sni': '', 'password': ''}}
+2025-07-27 16:49:35 🔍 API收到链接: vless://12345678-90ab-11eb-ac15-000000000000@192.168.1.100:443?type=tcp&security=tls&sni=example.com#测试VLESS节点
+2025-07-27 16:49:35 🔍 开始解析链接: vless://12345678-90ab-11eb-ac15-000000000000@192.168.1.100:443?type=tcp&security=tls&sni=example.com#测试VLESS节点
+2025-07-27 16:49:35 🔍 节点URL: vless://12345678-90ab-11eb-ac15-000000000000@192.168.1.100:443?type=tcp&security=tls&sni=example.com
+2025-07-27 16:49:35 🔍 节点名称: 测试VLESS节点
+2025-07-27 16:49:35 🔍 解析结果: {'name': '测试VLESS节点', 'protocol': 'vless', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'password': ''}
+2025-07-27 16:49:35 ✅ 字段 protocol: vless
+2025-07-27 16:49:35 ✅ 字段 server: 192.168.1.100
+2025-07-27 16:49:35 ✅ 字段 port: 443
+2025-07-27 16:49:35 ✅ 字段 name: 测试VLESS节点
+2025-07-27 16:49:35 🔍 最终返回的node_info: {'name': '测试VLESS节点', 'protocol': 'vless', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'password': ''}
+2025-07-27 16:49:35 🔍 API解析结果: {'name': '测试VLESS节点', 'protocol': 'vless', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'password': ''}
+2025-07-27 16:49:35 🔍 API返回数据: {'success': True, 'node_info': {'name': '测试VLESS节点', 'protocol': 'vless', 'uuid': '12345678-90ab-11eb-ac15-000000000000', 'network': 'tcp', 'path': '', 'host': '', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'password': ''}}
+2025-07-27 16:49:35 🔍 API收到链接: trojan://password@192.168.1.100:443?security=tls&sni=example.com#测试Trojan节点
+2025-07-27 16:49:35 🔍 开始解析链接: trojan://password@192.168.1.100:443?security=tls&sni=example.com#测试Trojan节点
+2025-07-27 16:49:35 🔍 节点URL: trojan://password@192.168.1.100:443?security=tls&sni=example.com
+2025-07-27 16:49:35 🔍 节点名称: 测试Trojan节点
+2025-07-27 16:49:35 🔍 解析结果: {'name': '测试Trojan节点', 'protocol': 'trojan', 'password': 'password', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'network': 'tcp', 'path': '', 'host': '', 'uuid': ''}
+2025-07-27 16:49:35 ✅ 字段 protocol: trojan
+2025-07-27 16:49:35 ✅ 字段 server: 192.168.1.100
+2025-07-27 16:49:35 ✅ 字段 port: 443
+2025-07-27 16:49:35 ✅ 字段 name: 测试Trojan节点
+2025-07-27 16:49:35 🔍 最终返回的node_info: {'name': '测试Trojan节点', 'protocol': 'trojan', 'password': 'password', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'network': 'tcp', 'path': '', 'host': '', 'uuid': ''}
+2025-07-27 16:49:35 🔍 API解析结果: {'name': '测试Trojan节点', 'protocol': 'trojan', 'password': 'password', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'network': 'tcp', 'path': '', 'host': '', 'uuid': ''}
+2025-07-27 16:49:35 🔍 API返回数据: {'success': True, 'node_info': {'name': '测试Trojan节点', 'protocol': 'trojan', 'password': 'password', 'tls': True, 'sni': 'example.com', 'server': '192.168.1.100', 'port': '443', 'method': 'aes-256-gcm', 'network': 'tcp', 'path': '', 'host': '', 'uuid': ''}}
+2025-07-27 16:51:37 ✅ 节点文件已更新
+2025-07-27 16:51:37 ✅ 已删除节点 #1
+2025-07-27 16:51:51 ✅ 节点文件已更新
+2025-07-27 16:51:51 ✅ 已批量删除 4 个节点
+2025-07-27 16:52:10 ✅ 节点文件已更新
+2025-07-27 17:08:33 ✅ 节点文件已更新

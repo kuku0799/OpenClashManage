@@ -25,9 +25,9 @@ def clean_name(name: str, existing_names: set) -> str:
     except:
         pass
     
-    # 移除特殊字符，保留中文、字母、数字、下划线、连字符、点号、空格
-    # 使用更宽松的正则表达式，保留更多有用字符
-    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.\s]', '', name.strip())
+    # 移除特殊字符，保留更多有用字符
+    # 保留：中文、字母、数字、下划线、连字符、点号、空格、冒号、斜杠、括号、方括号等
+    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.\s:/\()\[\]]', '', name.strip())
     
     # 清理多余的空格
     name = re.sub(r'\s+', ' ', name).strip()
@@ -37,7 +37,7 @@ def clean_name(name: str, existing_names: set) -> str:
         name = "Unnamed"
     
     # 限制长度
-    name = name[:30]  # 增加长度限制
+    name = name[:50]  # 增加长度限制到50字符
     
     original = name
     count = 1
@@ -63,10 +63,22 @@ def extract_custom_name(link: str) -> str:
         except:
             pass
         
-        # 处理括号内的名称
+        # 处理括号内的名称 - 改进逻辑
         bracket_match = re.search(r'[（(](.*?)[)）]', name)
         if bracket_match:
-            return bracket_match.group(1)
+            bracket_content = bracket_match.group(1).strip()
+            if bracket_content:  # 只有当括号内容不为空时才使用
+                # 如果括号内容看起来像是一个完整的名称，使用它
+                if len(bracket_content) > 1 and not bracket_content.isdigit():
+                    # 检查括号内容是否包含有意义的文字（不只是缩写）
+                    if any(char.isalpha() for char in bracket_content) and len(bracket_content) > 2:
+                        return bracket_content
+                    # 否则保留原始名称，但移除括号
+                    else:
+                        return re.sub(r'[（()）]', '', name).strip()
+                # 否则保留原始名称，但移除括号
+                else:
+                    return re.sub(r'[（()）]', '', name).strip()
         
         # 如果名称仍然包含URL编码，尝试进一步清理
         if '%' in name:
@@ -80,6 +92,9 @@ def extract_custom_name(link: str) -> str:
 
 def process_node_name(raw_name: str, existing_names: set) -> str:
     """处理节点名称，包括URL解码和清理"""
+    if not raw_name or raw_name == "Unnamed":
+        return "Unnamed"
+    
     # 处理URL编码 - 使用多重解码
     try:
         original_name = raw_name
@@ -88,11 +103,16 @@ def process_node_name(raw_name: str, existing_names: set) -> str:
             if decoded_name == raw_name:  # 如果没有变化，说明已经解码完成
                 break
             raw_name = decoded_name
-    except:
-        pass
+    except Exception as e:
+        write_log(f"⚠️ [parse] URL解码失败: {e}")
     
     # 清理名称
     name = clean_name(raw_name, existing_names)
+    
+    # 添加调试信息
+    if name != raw_name:
+        write_log(f"🔍 [parse] 节点名称处理: '{raw_name}' -> '{name}'")
+    
     return name
 
 def parse_plugin_params(query: str) -> Dict:
