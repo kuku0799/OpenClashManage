@@ -268,13 +268,14 @@ class OpenClashManager:
     def get_watchdog_status(self):
         """获取守护进程状态"""
         try:
-        if os.path.exists(PID_FILE):
-            with open(PID_FILE, 'r') as f:
-                pid = f.read().strip()
-            if pid and self.check_process_running(pid):
-                return True, pid
-        return False, None
-        except:
+            if os.path.exists(PID_FILE):
+                with open(PID_FILE, 'r') as f:
+                    pid = f.read().strip()
+                if pid and self.check_process_running(pid):
+                    return True, pid
+            return False, None
+        except Exception as e:
+            write_log(f"❌ 获取守护进程状态失败: {e}")
             return False, None
     
     def manual_sync(self):
