@@ -193,44 +193,209 @@ copy_app_files() {
     # 从GitHub下载应用文件
     GITHUB_RAW="https://raw.githubusercontent.com/kuku0799/OpenClashManage/main"
     
-    # 下载主应用文件
+    # 尝试下载主应用文件
+    download_success=true
     for file in app.py log.py jx.py zc.py zr.py zw.py; do
-        if wget -q "$GITHUB_RAW/$file" -O "$file"; then
+        if wget -q "$GITHUB_RAW/$file" -O "$file" 2>/dev/null; then
             print_success "$file 下载成功"
             chmod +x "$file"
         else
-            print_error "$file 下载失败"
-            exit 1
+            print_warning "$file 下载失败，将创建基本版本"
+            download_success=false
         fi
     done
     
-    # 下载requirements.txt
-    if wget -q "$GITHUB_RAW/requirements.txt" -O requirements.txt; then
-        print_success "requirements.txt 下载成功"
+    # 如果下载失败，创建基本的app.py
+    if [ "$download_success" = false ]; then
+        print_warning "网络下载失败，创建基本应用文件..."
+        create_basic_app_files
     else
-        print_error "requirements.txt 下载失败"
-        exit 1
+        # 下载requirements.txt
+        if wget -q "$GITHUB_RAW/requirements.txt" -O requirements.txt 2>/dev/null; then
+            print_success "requirements.txt 下载成功"
+        else
+            print_warning "requirements.txt 下载失败，创建基本版本"
+            create_basic_requirements
+        fi
+        
+        # 下载templates目录
+        mkdir -p templates
+        if wget -q "$GITHUB_RAW/templates/index.html" -O templates/index.html 2>/dev/null; then
+            print_success "templates/index.html 下载成功"
+        else
+            print_warning "templates/index.html 下载失败，创建基本版本"
+            create_basic_template
+        fi
+        
+        # 下载管理脚本
+        if wget -q "$GITHUB_RAW/manage.sh" -O manage.sh 2>/dev/null; then
+            print_success "manage.sh 下载成功"
+            chmod +x manage.sh
+        else
+            print_warning "manage.sh 下载失败，创建基本版本"
+            create_basic_manage_script
+        fi
     fi
     
-    # 下载templates目录
+    print_success "应用文件准备完成"
+}
+
+# 创建基本的应用文件
+create_basic_app_files() {
+    # 创建基本的app.py
+    cat > app.py << 'EOF'
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from flask import Flask, render_template, request, jsonify
+import os
+from datetime import datetime
+
+app = Flask(__name__)
+app.secret_key = 'openclash_manage_secret_key_2024'
+
+# 配置路径
+ROOT_DIR = "/root/OpenClashManage"
+NODES_FILE = f"{ROOT_DIR}/wangluo/nodes.txt"
+LOG_FILE = f"{ROOT_DIR}/wangluo/log.txt"
+
+def write_log(msg: str):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = f"{now} {msg}"
+    print(line)
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except Exception as e:
+        print(f"Failed to write log: {e}")
+
+@app.route('/')
+def index():
+    return "OpenClash管理面板 - 基本版本已启动！"
+
+@app.route('/api/status')
+def status():
+    return jsonify({'status': 'running', 'message': '应用正常运行'})
+
+if __name__ == '__main__':
+    write_log("🚀 OpenClash管理面板启动")
+    app.run(host='0.0.0.0', port=8888, debug=False)
+EOF
+
+    # 创建基本的log.py
+    cat > log.py << 'EOF'
+from datetime import datetime
+import os
+
+DEFAULT_LOG_FILE = "/root/OpenClashManage/wangluo/log.txt"
+ENABLE_CONSOLE_OUTPUT = True
+
+def write_log(msg: str, log_path: str = DEFAULT_LOG_FILE):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = f"{now} {msg}"
+    if ENABLE_CONSOLE_OUTPUT:
+        print(line)
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except Exception as e:
+        if ENABLE_CONSOLE_OUTPUT:
+            print(f"[log.py] Failed to write log: {e}")
+EOF
+
+    # 创建其他基本文件
+    for file in jx.py zc.py zr.py zw.py; do
+        cat > "$file" << 'EOF'
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+print("基本版本 - 功能待完善")
+EOF
+        chmod +x "$file"
+    done
+}
+
+# 创建基本的requirements.txt
+create_basic_requirements() {
+    cat > requirements.txt << 'EOF'
+Flask==2.3.3
+requests==2.31.0
+ruamel.yaml==0.18.5
+EOF
+}
+
+# 创建基本的模板文件
+create_basic_template() {
     mkdir -p templates
-    if wget -q "$GITHUB_RAW/templates/index.html" -O templates/index.html; then
-        print_success "templates/index.html 下载成功"
-    else
-        print_error "templates/index.html 下载失败"
-        exit 1
-    fi
-    
-    # 下载管理脚本
-    if wget -q "$GITHUB_RAW/manage.sh" -O manage.sh; then
-        print_success "manage.sh 下载成功"
-        chmod +x manage.sh
-    else
-        print_error "manage.sh 下载失败"
-        exit 1
-    fi
-    
-    print_success "应用文件下载完成"
+    cat > templates/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenClash管理面板</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>OpenClash管理面板</h1>
+    <p>基本版本已启动！</p>
+    <p>访问地址: http://192.168.5.1:8888</p>
+</body>
+</html>
+EOF
+}
+
+# 创建基本的管理脚本
+create_basic_manage_script() {
+    cat > manage.sh << 'EOF'
+#!/bin/sh
+APP_DIR="/root/OpenClashManage"
+LOG_FILE="$APP_DIR/wangluo/log.txt"
+
+case "$1" in
+    start)
+        echo "启动OpenClash管理面板..."
+        cd "$APP_DIR"
+        nohup python3 app.py > "$LOG_FILE" 2>&1 &
+        echo "应用已启动，PID: $!"
+        echo "访问地址: http://192.168.5.1:8888"
+        ;;
+    stop)
+        echo "停止OpenClash管理面板..."
+        pkill -f "python3 app.py"
+        echo "应用已停止"
+        ;;
+    restart)
+        echo "重启OpenClash管理面板..."
+        pkill -f "python3 app.py"
+        sleep 2
+        cd "$APP_DIR"
+        nohup python3 app.py > "$LOG_FILE" 2>&1 &
+        echo "应用已重启，PID: $!"
+        echo "访问地址: http://192.168.5.1:8888"
+        ;;
+    status)
+        if pgrep -f "python3 app.py" > /dev/null; then
+            echo "✓ 应用正在运行"
+            ps | grep "python3 app.py" | grep -v grep
+            echo "访问地址: http://192.168.5.1:8888"
+        else
+            echo "✗ 应用未运行"
+        fi
+        ;;
+    logs)
+        if [ -f "$LOG_FILE" ]; then
+            echo "=== 应用日志 ==="
+            tail -20 "$LOG_FILE"
+        else
+            echo "日志文件不存在"
+        fi
+        ;;
+    *)
+        echo "用法: $0 {start|stop|restart|status|logs}"
+        ;;
+esac
+EOF
+    chmod +x manage.sh
 }
 
 # 设置文件权限
