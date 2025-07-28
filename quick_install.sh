@@ -364,7 +364,7 @@ requests==2.31.0
 ruamel.yaml==0.18.5
 EOF
 
-    # 创建templates/index.html
+    # 创建templates/index.html (完整内容)
     mkdir -p templates
     cat > templates/index.html << 'EOF'
 <!DOCTYPE html>
@@ -384,28 +384,29 @@ EOF
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: #333;
         }
         
         .container {
             max-width: 1200px;
-            margin: 0 auto;
-            background: white;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
             overflow: hidden;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
         }
         
         .header h1 {
-            font-size: 2.5em;
             margin-bottom: 10px;
+            font-size: 2.5em;
         }
         
         .header p {
@@ -414,74 +415,90 @@ EOF
         }
         
         .content {
-            padding: 30px;
+            padding: 20px;
         }
         
         .status-bar {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
         
         .status-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            font-weight: 500;
         }
         
         .status-dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            display: inline-block;
+            margin-right: 8px;
         }
         
         .status-running {
-            background: #28a745;
+            background-color: #28a745;
+            animation: pulse 2s infinite;
         }
         
         .status-stopped {
-            background: #dc3545;
+            background-color: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
         
         .tabs {
             display: flex;
-            border-bottom: 2px solid #e9ecef;
+            border-bottom: 2px solid #dee2e6;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .tab {
-            padding: 15px 30px;
             background: none;
             border: none;
+            padding: 12px 24px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 500;
             color: #6c757d;
-            border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
-        }
-        
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
+            border-bottom: 3px solid transparent;
         }
         
         .tab:hover {
-            color: #667eea;
+            color: #007bff;
+            background-color: #f8f9fa;
+        }
+        
+        .tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
         }
         
         .tab-content {
             display: none;
+            animation: fadeIn 0.3s ease;
         }
         
         .tab-content.active {
             display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .form-group {
@@ -498,21 +515,24 @@ EOF
         .form-control {
             width: 100%;
             padding: 12px;
-            border: 2px solid #e9ecef;
+            border: 2px solid #dee2e6;
             border-radius: 8px;
             font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
             transition: border-color 0.3s ease;
         }
         
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
         
         .btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 25px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -521,83 +541,49 @@ EOF
             margin-bottom: 10px;
         }
         
-        .btn-primary {
-            background: #667eea;
-            color: white;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
-        .btn-primary:hover {
-            background: #5a6fd8;
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
         }
         
         .btn-success {
-            background: #28a745;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
             color: white;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
         }
         
         .btn-warning {
-            background: #ffc107;
+            background: linear-gradient(135deg, #ffc107, #e0a800);
             color: #212529;
         }
         
-        .btn-warning:hover {
-            background: #e0a800;
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
         }
         
         .log-container {
             background: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px;
             max-height: 400px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
             font-size: 12px;
-            line-height: 1.4;
             white-space: pre-wrap;
-        }
-        
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        
-        .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        
-        .alert-danger {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-        
-        .alert-info {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
+            word-wrap: break-word;
         }
         
         .system-info {
             background: #f8f9fa;
             border-radius: 8px;
             padding: 20px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
         
         .system-info h3 {
@@ -605,12 +591,35 @@ EOF
             color: #495057;
         }
         
-        .system-info pre {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-            font-size: 12px;
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
         
         @media (max-width: 768px) {
@@ -619,30 +628,22 @@ EOF
                 border-radius: 10px;
             }
             
-            .header {
-                padding: 20px;
-            }
-            
             .header h1 {
                 font-size: 2em;
             }
             
-            .content {
-                padding: 20px;
-            }
-            
             .status-bar {
                 flex-direction: column;
-                align-items: flex-start;
+                text-align: center;
             }
             
             .tabs {
-                flex-wrap: wrap;
+                flex-direction: column;
             }
             
             .tab {
-                padding: 10px 15px;
-                font-size: 14px;
+                text-align: center;
+                border-bottom: 1px solid #dee2e6;
             }
         }
     </style>
@@ -754,8 +755,8 @@ EOF
             fetch('/api/get_nodes')
             .then(response => response.json())
             .then(data => {
-                document.getElementById('nodes-content').value = data.content;
-                showAlert('nodes-alert', 'success', '节点加载成功');
+                document.getElementById('nodes-content').value = data.content || '';
+                showAlert('nodes-alert', 'info', '节点已刷新');
             })
             .catch(error => {
                 showAlert('nodes-alert', 'danger', '加载失败: ' + error);
@@ -783,7 +784,15 @@ EOF
         
         // 刷新日志
         function refreshLog() {
-            location.reload();
+            fetch('/api/get_nodes')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('log-content').textContent = data.content || '';
+                showAlert('logs-alert', 'info', '日志已刷新');
+            })
+            .catch(error => {
+                showAlert('logs-alert', 'danger', '刷新失败: ' + error);
+            });
         }
         
         // 加载系统信息
@@ -791,20 +800,12 @@ EOF
             fetch('/api/system_info')
             .then(response => response.json())
             .then(data => {
-                let html = '';
-                if (data.memory) {
-                    html += '<h4>内存信息:</h4><pre>' + data.memory + '</pre>';
-                }
-                if (data.disk) {
-                    html += '<h4>磁盘信息:</h4><pre>' + data.disk + '</pre>';
-                }
-                if (data.cpu_load) {
-                    html += '<h4>CPU负载:</h4><pre>' + data.cpu_load + '</pre>';
-                }
-                if (data.error) {
-                    html = '<div class="alert alert-danger">加载系统信息失败: ' + data.error + '</div>';
-                }
-                document.getElementById('system-content').innerHTML = html;
+                let content = '';
+                if (data.memory) content += '<h4>内存信息:</h4><pre>' + data.memory + '</pre>';
+                if (data.disk) content += '<h4>磁盘信息:</h4><pre>' + data.disk + '</pre>';
+                if (data.cpu_load) content += '<h4>CPU负载:</h4><pre>' + data.cpu_load + '</pre>';
+                if (data.error) content = '<div class="alert alert-danger">' + data.error + '</div>';
+                document.getElementById('system-content').innerHTML = content;
             })
             .catch(error => {
                 document.getElementById('system-content').innerHTML = '<div class="alert alert-danger">加载失败: ' + error + '</div>';
@@ -832,54 +833,48 @@ EOF
             fetch('/api/get_status')
             .then(response => response.json())
             .then(data => {
-                updateStatus(data);
+                const openclashStatus = document.getElementById('openclash-status');
+                const openclashText = document.getElementById('openclash-text');
+                const watchdogStatus = document.getElementById('watchdog-status');
+                const watchdogText = document.getElementById('watchdog-text');
+                
+                if (data.openclash_running) {
+                    openclashStatus.className = 'status-dot status-running';
+                    openclashText.textContent = '运行中';
+                } else {
+                    openclashStatus.className = 'status-dot status-stopped';
+                    openclashText.textContent = '已停止';
+                }
+                
+                if (data.watchdog_running) {
+                    watchdogStatus.className = 'status-dot status-running';
+                    watchdogText.textContent = '运行中';
+                } else {
+                    watchdogStatus.className = 'status-dot status-stopped';
+                    watchdogText.textContent = '未运行';
+                }
+                
+                showAlert('control-alert', 'info', '状态已刷新');
             })
             .catch(error => {
-                console.error('刷新状态失败:', error);
+                showAlert('control-alert', 'danger', '刷新失败: ' + error);
             });
         }
         
-        // 更新状态显示
-        function updateStatus(data) {
-            const openclashStatus = document.getElementById('openclash-status');
-            const openclashText = document.getElementById('openclash-text');
-            const watchdogStatus = document.getElementById('watchdog-status');
-            const watchdogText = document.getElementById('watchdog-text');
-            
-            if (data.openclash_running) {
-                openclashStatus.className = 'status-dot status-running';
-                openclashText.textContent = '运行中';
-            } else {
-                openclashStatus.className = 'status-dot status-stopped';
-                openclashText.textContent = '已停止';
-            }
-            
-            if (data.watchdog_running) {
-                watchdogStatus.className = 'status-dot status-running';
-                watchdogText.textContent = '运行中';
-            } else {
-                watchdogStatus.className = 'status-dot status-stopped';
-                watchdogText.textContent = '未运行';
-            }
-        }
-        
         // 显示提示信息
-        function showAlert(elementId, type, message) {
-            const alertDiv = document.getElementById(elementId);
-            alertDiv.innerHTML = '<div class="alert alert-' + type + '">' + message + '</div>';
+        function showAlert(containerId, type, message) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '<div class="alert alert-' + type + '">' + message + '</div>';
             setTimeout(() => {
-                alertDiv.innerHTML = '';
-            }, 3000);
+                container.innerHTML = '';
+            }, 5000);
         }
         
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        // 页面加载时自动刷新状态
+        window.onload = function() {
             refreshStatus();
             loadSystemInfo();
-            
-            // 每30秒自动刷新状态
-            setInterval(refreshStatus, 30000);
-        });
+        };
     </script>
 </body>
 </html>
