@@ -1,0 +1,17 @@
+# OpenWrt专用依赖文件
+# 最小化依赖，适合OpenWrt环境
+
+# Web框架
+Flask==2.3.3
+
+# 网络请求
+requests==2.31.0
+
+# YAML处理
+PyYAML==6.0.1
+
+# 可选依赖（如果系统包管理器没有提供）
+# urllib3==2.0.7
+# certifi==2023.7.22
+# chardet==5.2.0
+# idna==3.4 

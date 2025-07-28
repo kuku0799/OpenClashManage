@@ -1,34 +1,26 @@
-# OpenClash管理面板
+# OpenClash管理面板 - 一键安装指南
 
-一个基于Flask的OpenClash Web管理面板，支持节点管理、配置同步、速度测试等功能。
+## 🚀 快速开始
 
-## 🚀 一键部署
-
-### 方法一：一键部署脚本（推荐）
+### 一键安装
 
 ```bash
-# 下载并运行一键部署脚本
-wget -O - https://raw.githubusercontent.com/your-username/OpenClashManage/main/一键部署.sh | sh
-```
+# 1. 下载项目文件到OpenWrt路由器
+# 2. 进入项目目录
+cd /path/to/OpenClashManage
 
-### 方法二：手动安装
-
-```bash
-# 1. 下载安装脚本
-wget https://raw.githubusercontent.com/your-username/OpenClashManage/main/install_openwrt.sh
-
-# 2. 设置执行权限
+# 3. 设置执行权限
 chmod +x install_openwrt.sh
 
-# 3. 运行安装
+# 4. 运行一键安装
 ./install_openwrt.sh install
 ```
 
-### 方法三：直接下载安装
+### 一键卸载
 
 ```bash
-# 一键下载并安装
-curl -sSL https://raw.githubusercontent.com/your-username/OpenClashManage/main/install_openwrt.sh | bash
+# 卸载应用
+./install_openwrt.sh uninstall
 ```
 
 ## 📋 系统要求
@@ -39,7 +31,25 @@ curl -sSL https://raw.githubusercontent.com/your-username/OpenClashManage/main/i
 - **存储**: 至少 10MB 可用空间
 - **网络**: 需要网络连接下载依赖包
 
-## 🌐 访问地址
+## 🔧 安装过程
+
+安装脚本会自动执行以下步骤：
+
+1. ✅ **环境检查** - 检查root权限、系统架构、OpenWrt版本
+2. ✅ **更新软件包** - 更新opkg软件包列表
+3. ✅ **安装Python3** - 安装Python3运行环境
+4. ✅ **安装pip** - 安装Python包管理器
+5. ✅ **安装依赖** - 安装Flask、requests、PyYAML等依赖
+6. ✅ **创建目录** - 创建应用目录结构
+7. ✅ **复制文件** - 复制应用文件到安装目录
+8. ✅ **设置权限** - 设置正确的文件权限
+9. ✅ **创建管理脚本** - 创建应用管理脚本
+10. ✅ **创建系统服务** - 创建OpenWrt系统服务
+11. ✅ **启用自启动** - 设置开机自动启动
+12. ✅ **启动应用** - 启动Web管理面板
+13. ✅ **测试应用** - 测试应用是否正常运行
+
+## 🌐 访问管理面板
 
 安装完成后，您可以通过以下地址访问：
 
@@ -78,16 +88,6 @@ curl -sSL https://raw.githubusercontent.com/your-username/OpenClashManage/main/i
 /root/OpenClashManage/manage.sh restart
 ```
 
-## ✨ 主要功能
-
-- 🔄 **节点管理** - 添加、删除、编辑节点
-- 📥 **批量导入** - 支持多种格式的节点链接导入
-- ⚡ **速度测试** - 测试节点连接速度
-- 🔄 **配置同步** - 自动同步到OpenClash配置
-- 📊 **实时监控** - 监控OpenClash运行状态
-- 📝 **日志查看** - 查看应用和OpenClash日志
-- 🎛️ **服务控制** - 启动、停止、重启OpenClash服务
-
 ## 📁 文件结构
 
 ```
@@ -95,7 +95,6 @@ curl -sSL https://raw.githubusercontent.com/your-username/OpenClashManage/main/i
 ├── app.py              # 主应用文件
 ├── log.py              # 日志模块
 ├── manage.sh           # 管理脚本
-├── install_openwrt.sh  # 安装脚本
 ├── wangluo/
 │   ├── nodes.txt       # 节点文件
 │   └── log.txt         # 应用日志
@@ -145,6 +144,28 @@ curl -sSL https://raw.githubusercontent.com/your-username/OpenClashManage/main/i
    /root/OpenClashManage/manage.sh restart
    ```
 
+4. **节点解析问题**
+   ```bash
+   # 检查节点文件
+   cat /root/OpenClashManage/wangluo/nodes.txt
+   
+   # 查看应用日志
+   /root/OpenClashManage/manage.sh logs
+   ```
+
+### 日志查看
+
+```bash
+# 查看安装日志
+cat /root/OpenClashManage/install.log
+
+# 查看应用日志
+tail -f /root/OpenClashManage/wangluo/log.txt
+
+# 查看系统日志
+logread | grep openclash
+```
+
 ## 🔄 更新应用
 
 ```bash
@@ -174,10 +195,6 @@ cp /tmp/nodes_backup.txt /root/OpenClashManage/wangluo/nodes.txt
 
 本项目采用 MIT 许可证。
 
-## 🤝 贡献
-
-欢迎提交Issue和Pull Request！
-
 ---
 
-**注意**: 此项目仅适用于OpenWrt系统，请确保在正确的环境中运行。 
+**注意**: 此脚本仅适用于OpenWrt系统，请确保在正确的环境中运行。 

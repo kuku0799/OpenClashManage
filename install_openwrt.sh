@@ -1,91 +1,279 @@
-#!/bin/bash
+#!/bin/sh
 
-# OpenClash管理面板安装脚本
-# 适用于OpenWrt系统
+# OpenClash管理面板 - OpenWrt一键安装脚本
+# 作者: OpenClashManage
+# 版本: 1.0
+# 支持架构: aarch64, x86_64
 
-echo "🚀 开始安装OpenClash管理面板..."
+# 颜色定义
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# 检查是否为root用户
-if [ "$EUID" -ne 0 ]; then
-    echo "❌ 请使用root权限运行此脚本"
-    exit 1
-fi
+# 配置
+APP_NAME="OpenClash管理面板"
+APP_DIR="/root/OpenClashManage"
+LOG_FILE="$APP_DIR/install.log"
+SERVICE_NAME="openclash-manage"
+ACCESS_IP="192.168.5.1"
+ACCESS_PORT="8888"
+
+# 日志函数
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+print_header() {
+    echo -e "${BLUE}"
+    echo "=========================================="
+    echo "    OpenClash管理面板 - 一键安装脚本"
+    echo "=========================================="
+    echo -e "${NC}"
+}
+
+print_step() {
+    echo -e "${GREEN}[步骤 $1]${NC} $2"
+}
+
+print_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}✗ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠ $1${NC}"
+}
+
+# 检查root权限
+check_root() {
+    if [ "$(id -u)" != "0" ]; then
+        print_error "此脚本需要root权限运行"
+        exit 1
+    fi
+}
+
+# 检查系统架构
+check_architecture() {
+    ARCH=$(uname -m)
+    log "系统架构: $ARCH"
+    
+    case $ARCH in
+        aarch64)
+            print_success "检测到ARM64架构"
+            ;;
+        x86_64)
+            print_success "检测到x86_64架构"
+            ;;
+        *)
+            print_warning "未测试的架构: $ARCH"
+            ;;
+    esac
+}
+
+# 检查OpenWrt版本
+check_openwrt() {
+    if [ -f /etc/openwrt_release ]; then
+        . /etc/openwrt_release
+        log "OpenWrt版本: $DISTRIB_RELEASE"
+        log "目标架构: $DISTRIB_TARGET"
+        print_success "检测到OpenWrt系统"
+    else
+        print_error "未检测到OpenWrt系统"
+        exit 1
+    fi
+}
 
 # 更新软件包列表
-echo "📦 更新软件包列表..."
-opkg update
+update_packages() {
+    print_step "1" "更新软件包列表..."
+    opkg update
+    if [ $? -eq 0 ]; then
+        print_success "软件包列表更新成功"
+    else
+        print_error "软件包列表更新失败"
+        exit 1
+    fi
+}
 
-# 安装必要的软件包
-echo "📦 安装必要的软件包..."
-opkg install python3 python3-pip python3-flask python3-yaml python3-requests git wget curl
+# 安装Python3
+install_python3() {
+    print_step "2" "安装Python3..."
+    
+    # 检查Python3是否已安装
+    if command -v python3 >/dev/null 2>&1; then
+        print_success "Python3已安装"
+        python3 --version
+    else
+        print_warning "正在安装Python3..."
+        opkg install python3
+        if [ $? -eq 0 ]; then
+            print_success "Python3安装成功"
+        else
+            print_error "Python3安装失败"
+            exit 1
+        fi
+    fi
+}
 
-# 创建安装目录
-INSTALL_DIR="/root/OpenClashManage"
-echo "📁 创建安装目录: $INSTALL_DIR"
-mkdir -p $INSTALL_DIR
-cd $INSTALL_DIR
-
-# 下载项目文件
-echo "📥 下载项目文件..."
-wget -O app.py https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/app.py
-wget -O jx.py https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/jx.py
-wget -O zr.py https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/zr.py
-wget -O zw.py https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/zw.py
-wget -O jk.sh https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/jk.sh
-wget -O log.py https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/log.py
-wget -O requirements.txt https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/requirements.txt
-wget -O README.md https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/README.md
-
-# 创建必要的目录
-mkdir -p templates
-mkdir -p wangluo
-
-# 下载模板文件
-echo "📥 下载模板文件..."
-wget -O templates/index.html https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/templates/index.html
-
-# 创建初始节点文件
-echo "📝 创建初始节点文件..."
-cat > wangluo/nodes.txt << 'EOF'
-# 在此粘贴你的节点链接，一行一个，支持 ss:// vmess:// vless:// trojan://协议
-# 示例:
-# ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@server:port#节点名称
-# vmess://eyJhZGQiOiJzZXJ2ZXIiLCJwb3J0IjoiODA4MCIsImlkIjoiMTIzNDU2Nzg5MCIsIm5ldCI6IndzIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9#节点名称
-
-# 测试节点（可以删除这些测试节点）
-ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试节点1
-vmess://eyJhZGQiOiIxOTIuMTY4LjEuMTAwIiwicG9ydCI6IjgwODAiLCJpZCI6IjEyMzQ1Njc4OTAiLCJuZXQiOiJ3cyIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==#测试节点2
-vless://12345678-1234-1234-1234-123456789012@192.168.1.100:443?security=tls&type=ws#测试节点3
-trojan://password@192.168.1.100:443#测试节点4
-EOF
-
-# 创建日志文件
-touch wangluo/log.txt
-
-# 设置文件权限
-echo "🔐 设置文件权限..."
-chmod +x jk.sh
-chmod 755 *.py
-chmod 644 templates/*
-chmod 644 wangluo/*
+# 安装pip
+install_pip() {
+    print_step "3" "安装pip..."
+    
+    # 检查pip是否已安装
+    if command -v pip3 >/dev/null 2>&1; then
+        print_success "pip已安装"
+    else
+        print_warning "正在安装pip..."
+        opkg install python3-pip
+        if [ $? -eq 0 ]; then
+            print_success "pip安装成功"
+        else
+            print_error "pip安装失败"
+            exit 1
+        fi
+    fi
+}
 
 # 安装Python依赖
-echo "📦 安装Python依赖..."
-pip3 install flask ruamel.yaml requests
+install_python_deps() {
+    print_step "4" "安装Python依赖..."
+    
+    # 安装Flask
+    python3 -c "import flask" 2>/dev/null || {
+        print_warning "安装Flask..."
+        python3 -m pip install Flask
+    }
+    
+    # 安装requests
+    python3 -c "import requests" 2>/dev/null || {
+        print_warning "安装requests..."
+        python3 -m pip install requests
+    }
+    
+    # 安装PyYAML
+    python3 -c "import yaml" 2>/dev/null || {
+        print_warning "安装PyYAML..."
+        python3 -m pip install PyYAML
+    }
+    
+    print_success "Python依赖安装完成"
+}
 
-# 创建启动脚本
-echo "📝 创建启动脚本..."
-cat > start.sh << 'EOF'
-#!/bin/bash
-cd /root/OpenClashManage
-python3 app.py
+# 创建应用目录
+create_app_dirs() {
+    print_step "5" "创建应用目录..."
+    
+    mkdir -p "$APP_DIR"
+    mkdir -p "$APP_DIR/wangluo"
+    mkdir -p "$APP_DIR/templates"
+    
+    print_success "应用目录创建完成"
+}
+
+# 复制应用文件
+copy_app_files() {
+    print_step "6" "复制应用文件..."
+    
+    # 检查当前目录是否有应用文件
+    if [ -f "app.py" ]; then
+        cp app.py "$APP_DIR/"
+        cp log.py "$APP_DIR/"
+        cp -r templates/* "$APP_DIR/templates/"
+        print_success "应用文件复制完成"
+    else
+        print_error "未找到应用文件，请确保在正确的目录中运行此脚本"
+        exit 1
+    fi
+}
+
+# 设置文件权限
+set_permissions() {
+    print_step "7" "设置文件权限..."
+    
+    chmod +x "$APP_DIR/app.py"
+    chmod +x "$APP_DIR/manage.sh"
+    chmod 666 "$APP_DIR/wangluo/log.txt" 2>/dev/null || touch "$APP_DIR/wangluo/log.txt" && chmod 666 "$APP_DIR/wangluo/log.txt"
+    
+    print_success "文件权限设置完成"
+}
+
+# 创建管理脚本
+create_manage_script() {
+    print_step "8" "创建管理脚本..."
+    
+    cat > "$APP_DIR/manage.sh" << 'EOF'
+#!/bin/sh
+
+# OpenClash管理面板 - 管理脚本
+APP_DIR="/root/OpenClashManage"
+LOG_FILE="$APP_DIR/wangluo/log.txt"
+
+case "$1" in
+    start)
+        echo "启动OpenClash管理面板..."
+        cd "$APP_DIR"
+        nohup python3 app.py > "$LOG_FILE" 2>&1 &
+        echo "应用已启动，PID: $!"
+        echo "访问地址: http://192.168.5.1:8888"
+        ;;
+    stop)
+        echo "停止OpenClash管理面板..."
+        pkill -f "python3 app.py"
+        echo "应用已停止"
+        ;;
+    restart)
+        echo "重启OpenClash管理面板..."
+        pkill -f "python3 app.py"
+        sleep 2
+        cd "$APP_DIR"
+        nohup python3 app.py > "$LOG_FILE" 2>&1 &
+        echo "应用已重启，PID: $!"
+        echo "访问地址: http://192.168.5.1:8888"
+        ;;
+    status)
+        if pgrep -f "python3 app.py" > /dev/null; then
+            echo "✓ 应用正在运行"
+            ps aux | grep "python3 app.py" | grep -v grep
+            echo "访问地址: http://192.168.5.1:8888"
+        else
+            echo "✗ 应用未运行"
+        fi
+        ;;
+    logs)
+        if [ -f "$LOG_FILE" ]; then
+            echo "=== 应用日志 ==="
+            tail -20 "$LOG_FILE"
+        else
+            echo "日志文件不存在"
+        fi
+        ;;
+    *)
+        echo "用法: $0 {start|stop|restart|status|logs}"
+        echo ""
+        echo "命令说明:"
+        echo "  start   - 启动应用"
+        echo "  stop    - 停止应用"
+        echo "  restart - 重启应用"
+        echo "  status  - 查看状态"
+        echo "  logs    - 查看日志"
+        ;;
+esac
 EOF
 
-chmod +x start.sh
+    chmod +x "$APP_DIR/manage.sh"
+    print_success "管理脚本创建完成"
+}
 
-# 创建服务文件
-echo "📝 创建系统服务..."
-cat > /etc/init.d/openclash-manage << 'EOF'
+# 创建系统服务
+create_system_service() {
+    print_step "9" "创建系统服务..."
+    
+    cat > "/etc/init.d/$SERVICE_NAME" << EOF
 #!/bin/sh /etc/rc.common
 
 START=99
@@ -93,43 +281,166 @@ STOP=15
 
 start() {
     echo "启动OpenClash管理面板..."
-    cd /root/OpenClashManage
-    python3 app.py > /dev/null 2>&1 &
-    echo $! > /var/run/openclash-manage.pid
+    $APP_DIR/manage.sh start
 }
 
 stop() {
     echo "停止OpenClash管理面板..."
-    if [ -f /var/run/openclash-manage.pid ]; then
-        kill $(cat /var/run/openclash-manage.pid)
-        rm -f /var/run/openclash-manage.pid
-    fi
+    $APP_DIR/manage.sh stop
 }
 
 restart() {
-    stop
-    sleep 2
-    start
+    echo "重启OpenClash管理面板..."
+    $APP_DIR/manage.sh restart
+}
+
+status() {
+    $APP_DIR/manage.sh status
 }
 EOF
 
-chmod +x /etc/init.d/openclash-manage
+    chmod +x "/etc/init.d/$SERVICE_NAME"
+    print_success "系统服务创建完成"
+}
 
-# 启用服务
-echo "🔧 启用系统服务..."
-/etc/init.d/openclash-manage enable
+# 启用开机自启动
+enable_autostart() {
+    print_step "10" "启用开机自启动..."
+    
+    /etc/init.d/$SERVICE_NAME enable
+    print_success "开机自启动已启用"
+}
 
-echo "✅ 安装完成！"
-echo ""
-echo "📋 使用说明："
-echo "1. 启动服务: /etc/init.d/openclash-manage start"
-echo "2. 停止服务: /etc/init.d/openclash-manage stop"
-echo "3. 重启服务: /etc/init.d/openclash-manage restart"
-echo "4. 手动启动: cd /root/OpenClashManage && python3 app.py"
-echo ""
-echo "🌐 访问地址: http://你的路由器IP:5000"
-echo ""
-echo "📝 编辑节点文件: nano /root/OpenClashManage/wangluo/nodes.txt"
-echo "📊 查看日志: tail -f /root/OpenClashManage/wangluo/log.txt"
-echo ""
-echo "🚀 现在可以启动服务了！" 
+# 启动应用
+start_application() {
+    print_step "11" "启动应用..."
+    
+    $APP_DIR/manage.sh start
+    sleep 3
+    
+    # 检查应用是否启动成功
+    if pgrep -f "python3 app.py" > /dev/null; then
+        print_success "应用启动成功"
+    else
+        print_error "应用启动失败"
+        return 1
+    fi
+}
+
+# 测试应用
+test_application() {
+    print_step "12" "测试应用..."
+    
+    # 检查端口
+    if netstat -tlnp 2>/dev/null | grep -q ":8888 "; then
+        print_success "端口8888正在监听"
+    else
+        print_warning "端口8888未监听"
+    fi
+    
+    # 测试HTTP访问
+    if command -v curl >/dev/null 2>&1; then
+        if curl -s -o /dev/null -w "%{http_code}" "http://localhost:8888" | grep -q "200\|404"; then
+            print_success "HTTP访问测试通过"
+        else
+            print_warning "HTTP访问测试失败"
+        fi
+    fi
+}
+
+# 显示安装结果
+show_installation_result() {
+    echo ""
+    echo -e "${BLUE}=========================================="
+    echo "    安装完成！"
+    echo "=========================================="
+    echo -e "${NC}"
+    
+    echo -e "${GREEN}✓ OpenClash管理面板安装成功${NC}"
+    echo ""
+    echo "📱 访问地址:"
+    echo "  本地访问: http://localhost:8888"
+    echo "  局域网访问: http://$ACCESS_IP:8888"
+    echo ""
+    echo "🔧 管理命令:"
+    echo "  启动: /etc/init.d/$SERVICE_NAME start"
+    echo "  停止: /etc/init.d/$SERVICE_NAME stop"
+    echo "  重启: /etc/init.d/$SERVICE_NAME restart"
+    echo "  状态: /etc/init.d/$SERVICE_NAME status"
+    echo "  日志: $APP_DIR/manage.sh logs"
+    echo ""
+    echo "🔄 开机自启动: 已启用"
+    echo "📁 安装目录: $APP_DIR"
+    echo "📝 日志文件: $APP_DIR/wangluo/log.txt"
+    echo ""
+    echo -e "${YELLOW}💡 提示: 现在可以在浏览器中访问管理面板了！${NC}"
+}
+
+# 主安装函数
+main_install() {
+    print_header
+    
+    # 检查环境
+    check_root
+    check_architecture
+    check_openwrt
+    
+    # 开始安装
+    update_packages
+    install_python3
+    install_pip
+    install_python_deps
+    create_app_dirs
+    copy_app_files
+    set_permissions
+    create_manage_script
+    create_system_service
+    enable_autostart
+    start_application
+    test_application
+    
+    # 显示结果
+    show_installation_result
+}
+
+# 卸载函数
+uninstall() {
+    echo -e "${RED}正在卸载OpenClash管理面板...${NC}"
+    
+    # 停止服务
+    /etc/init.d/$SERVICE_NAME stop 2>/dev/null
+    
+    # 禁用开机自启动
+    /etc/init.d/$SERVICE_NAME disable 2>/dev/null
+    
+    # 删除服务文件
+    rm -f "/etc/init.d/$SERVICE_NAME"
+    
+    # 删除应用目录
+    rm -rf "$APP_DIR"
+    
+    echo -e "${GREEN}卸载完成！${NC}"
+}
+
+# 主函数
+case "$1" in
+    install)
+        main_install
+        ;;
+    uninstall)
+        uninstall
+        ;;
+    *)
+        echo "OpenClash管理面板 - 一键安装脚本"
+        echo ""
+        echo "用法: $0 {install|uninstall}"
+        echo ""
+        echo "命令:"
+        echo "  install   - 安装OpenClash管理面板"
+        echo "  uninstall - 卸载OpenClash管理面板"
+        echo ""
+        echo "示例:"
+        echo "  $0 install    # 安装应用"
+        echo "  $0 uninstall  # 卸载应用"
+        ;;
+esac 

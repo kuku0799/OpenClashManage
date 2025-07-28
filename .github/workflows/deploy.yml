@@ -1,0 +1,71 @@
+name: Deploy to OpenWrt
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask requests pyyaml
+    
+    - name: Test application
+      run: |
+        python -c "import flask; print('Flask OK')"
+        python -c "import requests; print('Requests OK')"
+        python -c "import yaml; print('PyYAML OK')"
+    
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          OpenClash管理面板 - 一键安装包
+          
+          ## 安装方法
+          ```bash
+          # 下载安装脚本
+          wget https://raw.githubusercontent.com/${{ github.repository }}/main/install_openwrt.sh
+          
+          # 设置执行权限
+          chmod +x install_openwrt.sh
+          
+          # 一键安装
+          ./install_openwrt.sh install
+          ```
+          
+          ## 访问地址
+          - 本地访问: http://localhost:8888
+          - 局域网访问: http://192.168.5.1:8888
+          
+          ## 管理命令
+          ```bash
+          # 启动服务
+          /etc/init.d/openclash-manage start
+          
+          # 查看状态
+          /etc/init.d/openclash-manage status
+          
+          # 查看日志
+          /root/OpenClashManage/manage.sh logs
+          ```
+        draft: false
+        prerelease: false 
