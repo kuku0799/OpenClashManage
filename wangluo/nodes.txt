@@ -4,7 +4,10 @@
 # vmess://eyJhZGQiOiJzZXJ2ZXIiLCJwb3J0IjoiODA4MCIsImlkIjoiMTIzNDU2Nzg5MCIsIm5ldCI6IndzIiwidHlwZSI6Im5vbmUiLCJob3N0IjoiIiwicGF0aCI6IiIsInRscyI6IiJ9#节点名称
 
 # 测试节点（可以删除这些测试节点）
-ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点
+# 标准SS格式
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@192.168.1.100:8388#测试SS节点(标准格式)
+# 新SS格式
+ss://aes-256-gcm:aGZhc0VPbnpCTDhEeVd4VA==@192.168.1.100:8388#测试SS节点(新格式)
 vmess://eyJhZGQiOiIxOTIuMTY4LjEuMTAwIiwicG9ydCI6IjgwODAiLCJpZCI6IjEyMzQ1Njc4OTAiLCJuZXQiOiJ3cyIsInR5cGUiOiJub25lIiwiaG9zdCI6IiIsInBhdGgiOiIiLCJ0bHMiOiIifQ==#测试VMess节点
 vless://12345678-1234-1234-1234-123456789012@192.168.1.100:443?security=tls&type=ws#测试VLESS节点
 trojan://password@192.168.1.100:443#测试Trojan节点

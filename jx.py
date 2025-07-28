@@ -149,12 +149,23 @@ def parse_nodes(file_path: str) -> List[Dict]:
             if line.startswith("ss://"):
                 raw = line[5:]
                 name = process_node_name(extract_custom_name(line), existing_names)
-                if '@' in raw:
+                
+                # 处理标准格式: ss://base64编码@服务器:端口#节点名称
+                if '@' in raw and ':' in raw.split('@')[0]:
                     info, server = raw.split("@", 1)
-                    info = decode_base64(info)
-                    if not info:
-                        raise ValueError("Base64解码失败")
-                    method, password = info.split(":", 1)
+                    # 尝试Base64解码
+                    decoded_info = decode_base64(info)
+                    if decoded_info:
+                        # 标准格式
+                        method, password = decoded_info.split(":", 1)
+                    else:
+                        # 非标准格式: ss://加密方法:密码@服务器:端口#节点名称
+                        method_password = info
+                        if ':' in method_password:
+                            method, password = method_password.split(":", 1)
+                        else:
+                            raise ValueError("无法解析SS链接格式")
+                    
                     hostport = server.split("#")[0].split("?")[0]
                     host, port = extract_host_port(hostport)
                     query = urlparse(line).query
@@ -174,6 +185,7 @@ def parse_nodes(file_path: str) -> List[Dict]:
                         node.update(plugin_opts)
                     parsed_nodes.append(node)
                 else:
+                    # 处理旧格式: ss://base64编码的完整信息
                     decoded = decode_base64(raw.split("#")[0].split("?")[0])
                     if not decoded:
                         raise ValueError("Base64解码失败")
