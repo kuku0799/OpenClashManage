@@ -268,12 +268,12 @@ class OpenClashManager:
     def get_watchdog_status(self):
         """获取守护进程状态"""
         try:
-            if os.path.exists(PID_FILE):
-                with open(PID_FILE, 'r') as f:
-                    pid = f.read().strip()
-                if pid and self.check_process_running(pid):
-                    return True, pid
-            return False, None
+        if os.path.exists(PID_FILE):
+            with open(PID_FILE, 'r') as f:
+                pid = f.read().strip()
+            if pid and self.check_process_running(pid):
+                return True, pid
+        return False, None
         except:
             return False, None
     
