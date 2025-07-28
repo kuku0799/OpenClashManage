@@ -257,13 +257,28 @@ manager = OpenClashManager()
 def index():
     """主页"""
     try:
+        write_log("📄 开始渲染主页模板")
         nodes_content = manager.get_nodes_content()
         log_content = manager.get_log_content()
+        write_log(f"📊 节点内容长度: {len(nodes_content)}")
+        write_log(f"📊 日志内容长度: {len(log_content)}")
+        
+        # 检查模板文件是否存在
+        template_path = os.path.join(os.path.dirname(__file__), 'templates', 'index.html')
+        if os.path.exists(template_path):
+            write_log(f"✅ 模板文件存在: {template_path}")
+        else:
+            write_log(f"❌ 模板文件不存在: {template_path}")
+            return f"OpenClash管理面板 - 快速安装版本已启动！<br>错误: 模板文件不存在"
+        
         write_log("📄 渲染主页模板")
         return render_template('index.html', nodes_content=nodes_content, log_content=log_content)
     except Exception as e:
         write_log(f"❌ 渲染模板失败: {e}")
-        return f"OpenClash管理面板 - 快速安装版本已启动！<br>错误: {e}"
+        import traceback
+        error_trace = traceback.format_exc()
+        write_log(f"❌ 错误详情: {error_trace}")
+        return f"OpenClash管理面板 - 快速安装版本已启动！<br>错误: {e}<br>详情: {error_trace}"
 
 @app.route('/api/save_nodes', methods=['POST'])
 def save_nodes():
