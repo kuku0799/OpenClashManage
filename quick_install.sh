@@ -256,9 +256,14 @@ manager = OpenClashManager()
 @app.route('/')
 def index():
     """主页"""
-    nodes_content = manager.get_nodes_content()
-    log_content = manager.get_log_content()
-    return render_template('index.html', nodes_content=nodes_content, log_content=log_content)
+    try:
+        nodes_content = manager.get_nodes_content()
+        log_content = manager.get_log_content()
+        write_log("📄 渲染主页模板")
+        return render_template('index.html', nodes_content=nodes_content, log_content=log_content)
+    except Exception as e:
+        write_log(f"❌ 渲染模板失败: {e}")
+        return f"OpenClash管理面板 - 快速安装版本已启动！<br>错误: {e}"
 
 @app.route('/api/save_nodes', methods=['POST'])
 def save_nodes():
