@@ -188,16 +188,49 @@ create_app_dirs() {
 copy_app_files() {
     print_step "6" "复制应用文件..."
     
-    # 检查当前目录是否有应用文件
-    if [ -f "app.py" ]; then
-        cp app.py "$APP_DIR/"
-        cp log.py "$APP_DIR/"
-        cp -r templates/* "$APP_DIR/templates/"
-        print_success "应用文件复制完成"
+    cd "$APP_DIR"
+    
+    # 从GitHub下载应用文件
+    GITHUB_RAW="https://raw.githubusercontent.com/kuku0799/OpenClashManage/main"
+    
+    # 下载主应用文件
+    for file in app.py log.py jx.py zc.py zr.py zw.py; do
+        if wget -q "$GITHUB_RAW/$file" -O "$file"; then
+            print_success "$file 下载成功"
+            chmod +x "$file"
+        else
+            print_error "$file 下载失败"
+            exit 1
+        fi
+    done
+    
+    # 下载requirements.txt
+    if wget -q "$GITHUB_RAW/requirements.txt" -O requirements.txt; then
+        print_success "requirements.txt 下载成功"
     else
-        print_error "未找到应用文件，请确保在正确的目录中运行此脚本"
+        print_error "requirements.txt 下载失败"
         exit 1
     fi
+    
+    # 下载templates目录
+    mkdir -p templates
+    if wget -q "$GITHUB_RAW/templates/index.html" -O templates/index.html; then
+        print_success "templates/index.html 下载成功"
+    else
+        print_error "templates/index.html 下载失败"
+        exit 1
+    fi
+    
+    # 下载管理脚本
+    if wget -q "$GITHUB_RAW/manage.sh" -O manage.sh; then
+        print_success "manage.sh 下载成功"
+        chmod +x manage.sh
+    else
+        print_error "manage.sh 下载失败"
+        exit 1
+    fi
+    
+    print_success "应用文件下载完成"
 }
 
 # 设置文件权限
