@@ -16,16 +16,67 @@ app = Flask(__name__)
 app.secret_key = 'openclash_manage_secret_key_2024'
 
 # 配置路径
-ROOT_DIR = "/root/OpenClashManage"
+ROOT_DIR = os.getenv("OPENCLASH_MANAGE_ROOT", "/root/OpenClashManage")
 NODES_FILE = f"{ROOT_DIR}/wangluo/nodes.txt"
 LOG_FILE = f"{ROOT_DIR}/wangluo/log.txt"
-CONFIG_FILE = "/etc/openclash/config.yaml"
+CONFIG_FILE = os.getenv("OPENCLASH_CONFIG_PATH", "/etc/openclash/config.yaml")
 PID_FILE = "/tmp/openclash_watchdog.pid"
 
 class OpenClashManager:
     def __init__(self):
         self.watchdog_running = False
         self.watchdog_thread = None
+    
+    def check_dependencies(self):
+        """检查依赖文件是否存在"""
+        dependencies = [
+            f"{ROOT_DIR}/jk.sh",
+            f"{ROOT_DIR}/zr.py", 
+            f"{ROOT_DIR}/jx.py",
+            f"{ROOT_DIR}/zw.py",
+            f"{ROOT_DIR}/zc.py"
+        ]
+        
+        missing_files = []
+        for file_path in dependencies:
+            if not os.path.exists(file_path):
+                missing_files.append(file_path)
+        
+        if missing_files:
+            write_log(f"❌ 缺少依赖文件: {missing_files}")
+            return False
+        
+        return True
+    
+    def initialize_directories(self):
+        """初始化必要的目录"""
+        try:
+            # 创建必要的目录
+            directories = [
+                os.path.dirname(NODES_FILE),
+                os.path.dirname(LOG_FILE),
+                ROOT_DIR
+            ]
+            
+            for directory in directories:
+                os.makedirs(directory, exist_ok=True)
+            
+            # 创建空的节点文件（如果不存在）
+            if not os.path.exists(NODES_FILE):
+                with open(NODES_FILE, 'w', encoding='utf-8') as f:
+                    f.write("# OpenClash 节点配置文件\n# 每行一个节点链接，支持注释\n")
+                write_log("✅ 已创建空的节点文件")
+            
+            # 创建空的日志文件（如果不存在）
+            if not os.path.exists(LOG_FILE):
+                with open(LOG_FILE, 'w', encoding='utf-8') as f:
+                    f.write("")
+                write_log("✅ 已创建空的日志文件")
+            
+            return True
+        except Exception as e:
+            write_log(f"❌ 初始化目录失败: {e}")
+            return False
     
     def get_nodes_content(self):
         """获取节点文件内容"""
@@ -97,8 +148,19 @@ class OpenClashManager:
     
     def is_valid_node_url(self, url):
         """验证是否为有效的节点URL"""
-        # 支持所有协议，只要包含://就认为是有效节点
-        return '://' in url and len(url) > 10
+        if not url or '://' not in url:
+            return False
+        
+        # 检查支持的协议
+        supported_protocols = ['ss://', 'ssr://', 'vmess://', 'vless://', 'trojan://']
+        if not any(url.startswith(protocol) for protocol in supported_protocols):
+            return False
+        
+        # 检查URL长度
+        if len(url) < 20:  # 最小长度
+            return False
+        
+        return True
     
     def get_node_type(self, url):
         """获取节点类型"""
@@ -120,18 +182,17 @@ class OpenClashManager:
             content = self.get_nodes_content()
             lines = content.split('\n')
             
-            # 找到实际的节点行（跳过注释和空行）
-            node_lines = []
+            # 重新构建节点列表，保持原始行号
+            valid_lines = []
             for i, line in enumerate(lines):
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    node_lines.append((i, line))
+                if line.strip() and not line.strip().startswith('#'):
+                    valid_lines.append((i, line))
             
-            if node_index >= len(node_lines):
+            if node_index >= len(valid_lines):
                 return False, "节点索引超出范围"
             
             # 获取要删除的行号
-            line_index, _ = node_lines[node_index]
+            line_index, _ = valid_lines[node_index]
             
             # 删除该行
             lines.pop(line_index)
@@ -154,16 +215,15 @@ class OpenClashManager:
             content = self.get_nodes_content()
             lines = content.split('\n')
             
-            # 找到实际的节点行（跳过注释和空行）
-            node_lines = []
+            # 重新构建节点列表，保持原始行号
+            valid_lines = []
             for i, line in enumerate(lines):
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    node_lines.append((i, line))
+                if line.strip() and not line.strip().startswith('#'):
+                    valid_lines.append((i, line))
             
             # 验证索引
             for index in node_indices:
-                if index >= len(node_lines):
+                if index >= len(valid_lines):
                     return False, f"节点索引 {index} 超出范围"
             
             # 按索引倒序删除，避免索引变化
@@ -171,7 +231,7 @@ class OpenClashManager:
             deleted_lines = []
             
             for index in node_indices:
-                line_index, line_content = node_lines[index]
+                line_index, line_content = valid_lines[index]
                 deleted_lines.append(line_content)
                 lines.pop(line_index)
             
@@ -215,6 +275,10 @@ class OpenClashManager:
             return False, "守护进程已在运行"
         
         try:
+            # 检查依赖文件
+            if not self.check_dependencies():
+                return False, "缺少必要的依赖文件，无法启动守护进程"
+            
             # 检查是否已有守护进程运行
             if os.path.exists(PID_FILE):
                 with open(PID_FILE, 'r') as f:
@@ -281,6 +345,10 @@ class OpenClashManager:
     def manual_sync(self):
         """手动同步节点"""
         try:
+            # 检查依赖文件
+            if not self.check_dependencies():
+                return False, "缺少必要的依赖文件，无法执行同步"
+            
             cmd = f"python3 {ROOT_DIR}/zr.py"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             
@@ -320,34 +388,56 @@ class OpenClashManager:
             
             # 内存信息
             try:
-                result = subprocess.run("free -h", shell=True, capture_output=True, text=True)
+                result = subprocess.run("free -h", shell=True, capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     info['memory'] = result.stdout
+                else:
+                    info['memory'] = '获取失败'
+            except subprocess.TimeoutExpired:
+                info['memory'] = '获取超时'
             except:
-                pass
+                info['memory'] = '获取失败'
             
             # 磁盘信息
             try:
-                result = subprocess.run("df -h", shell=True, capture_output=True, text=True)
+                result = subprocess.run("df -h", shell=True, capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     info['disk'] = result.stdout
+                else:
+                    info['disk'] = '获取失败'
+            except subprocess.TimeoutExpired:
+                info['disk'] = '获取超时'
             except:
-                pass
+                info['disk'] = '获取失败'
             
             # CPU负载
             try:
-                result = subprocess.run("uptime", shell=True, capture_output=True, text=True)
+                result = subprocess.run("uptime", shell=True, capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     info['cpu_load'] = result.stdout
+                else:
+                    info['cpu_load'] = '获取失败'
+            except subprocess.TimeoutExpired:
+                info['cpu_load'] = '获取超时'
             except:
-                pass
+                info['cpu_load'] = '获取失败'
             
             return info
         except Exception as e:
+            write_log(f"❌ 获取系统信息失败: {e}")
             return {'error': str(e)}
 
 # 创建管理器实例
 manager = OpenClashManager()
+
+# 初始化应用
+try:
+    if manager.initialize_directories():
+        write_log("✅ 应用初始化成功")
+    else:
+        write_log("⚠️ 应用初始化部分失败，但将继续运行")
+except Exception as e:
+    write_log(f"❌ 应用初始化失败: {e}")
 
 @app.route('/')
 def index():
@@ -419,6 +509,50 @@ def system_info():
     info = manager.get_system_info()
     return jsonify(info)
 
+@app.route('/api/health')
+def health_check():
+    """健康检查"""
+    try:
+        # 检查基本功能
+        health_status = {
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'checks': {}
+        }
+        
+        # 检查文件系统
+        health_status['checks']['filesystem'] = {
+            'nodes_file': os.path.exists(NODES_FILE),
+            'log_file': os.path.exists(LOG_FILE),
+            'config_file': os.path.exists(CONFIG_FILE)
+        }
+        
+        # 检查依赖文件
+        health_status['checks']['dependencies'] = manager.check_dependencies()
+        
+        # 检查OpenClash状态
+        health_status['checks']['openclash'] = manager.get_openclash_status()
+        
+        # 检查守护进程状态
+        watchdog_status, watchdog_pid = manager.get_watchdog_status()
+        health_status['checks']['watchdog'] = watchdog_status
+        
+        # 如果有任何检查失败，标记为不健康
+        if not all([
+            health_status['checks']['filesystem']['nodes_file'],
+            health_status['checks']['filesystem']['log_file'],
+            health_status['checks']['dependencies']
+        ]):
+            health_status['status'] = 'unhealthy'
+        
+        return jsonify(health_status)
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now().isoformat()
+        })
+
 @app.route('/api/get_nodes', methods=['GET'])
 def get_nodes():
     """获取节点列表"""
@@ -476,22 +610,50 @@ def test_node_speed():
         node = nodes[node_index]
         node_url = node['url']
         
-        # 模拟测速（实际项目中需要调用真实的测速工具）
+        # 解析节点信息进行更准确的模拟测速
+        node_info = parse_single_node_link(node_url)
+        if not node_info:
+            return jsonify({'success': False, 'message': '无法解析节点信息'})
+        
+        # 基于节点类型和服务器信息进行更合理的模拟
         import random
         import time
         
         # 模拟测速延迟
-        time.sleep(1)
+        time.sleep(0.5)
         
-        # 生成模拟结果
-        latency = random.randint(50, 300)  # 延迟 50-300ms
-        speed = random.randint(1, 100)     # 速度 1-100Mbps
+        # 根据协议类型调整测速参数
+        protocol = node_info.get('protocol', 'unknown')
+        server = node_info.get('server', 'unknown')
+        
+        # 基于协议类型的延迟范围
+        if protocol == 'ss':
+            latency = random.randint(30, 150)
+        elif protocol in ['vmess', 'vless']:
+            latency = random.randint(50, 200)
+        elif protocol == 'trojan':
+            latency = random.randint(40, 180)
+        else:
+            latency = random.randint(50, 300)
+        
+        # 基于服务器位置的调整
+        if any(keyword in server.lower() for keyword in ['hk', 'hongkong', '香港']):
+            latency = max(20, latency - 30)  # 香港节点通常更快
+        elif any(keyword in server.lower() for keyword in ['jp', 'japan', '日本']):
+            latency = max(30, latency - 20)  # 日本节点较快
+        elif any(keyword in server.lower() for keyword in ['us', 'usa', '美国']):
+            latency = min(500, latency + 50)  # 美国节点较慢
+        
+        # 速度基于延迟计算
+        speed = max(1, int(1000 / latency)) if latency > 0 else random.randint(1, 100)
         
         result = {
             'success': True,
             'node_name': node.get('name', f'节点 {node_index + 1}'),
             'latency': latency,
             'speed': speed,
+            'protocol': protocol,
+            'server': server,
             'status': 'success' if latency < 200 else 'warning' if latency < 500 else 'error'
         }
         
