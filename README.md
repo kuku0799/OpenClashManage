@@ -2,9 +2,20 @@
 
 一个基于Flask的OpenClash Web管理面板，支持节点管理、配置同步、速度测试等功能。
 
-## 🚀 一键部署
+## 🚀 快速开始
 
-### 方法一：一键部署脚本（推荐）
+### 方法一：一键修复（推荐）
+
+如果你的OpenClash管理面板遇到节点同步问题，可以使用一键修复：
+
+```bash
+# 快速修复命令
+wget -O 快速修复.sh https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/快速修复.sh
+chmod +x 快速修复.sh
+bash 快速修复.sh
+```
+
+### 方法二：一键部署（全新安装）
 
 ```bash
 # 下载并运行一键部署脚本
