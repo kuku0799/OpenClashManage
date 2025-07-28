@@ -136,7 +136,7 @@ curl -sSL https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/instal
 3. **无法访问Web界面**
    ```bash
    # 检查端口
-   netstat -tlnp | grep :8888
+ss -tlnp | grep :8888 || netstat -tlnp | grep :8888
    
    # 检查防火墙
    iptables -L | grep 8888

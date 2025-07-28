@@ -29,7 +29,7 @@ case "$1" in
     status)
         if pgrep -f "python3 app.py" > /dev/null; then
             echo "✓ 应用正在运行"
-            ps aux | grep "python3 app.py" | grep -v grep
+            ps | grep "python3 app.py" | grep -v grep
             echo "访问地址: http://192.168.5.1:8888"
         else
             echo "✗ 应用未运行"

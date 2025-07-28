@@ -69,8 +69,17 @@ check_architecture() {
         x86_64)
             print_success "检测到x86_64架构"
             ;;
+        armv7l)
+            print_success "检测到ARMv7架构"
+            ;;
+        mips)
+            print_success "检测到MIPS架构"
+            ;;
+        mipsel)
+            print_success "检测到MIPSel架构"
+            ;;
         *)
-            print_warning "未测试的架构: $ARCH"
+            print_warning "未测试的架构: $ARCH，但会尝试安装"
             ;;
     esac
 }
@@ -238,7 +247,7 @@ case "$1" in
     status)
         if pgrep -f "python3 app.py" > /dev/null; then
             echo "✓ 应用正在运行"
-            ps aux | grep "python3 app.py" | grep -v grep
+            ps | grep "python3 app.py" | grep -v grep
             echo "访问地址: http://192.168.5.1:8888"
         else
             echo "✗ 应用未运行"
@@ -332,10 +341,20 @@ test_application() {
     print_step "12" "测试应用..."
     
     # 检查端口
-    if netstat -tlnp 2>/dev/null | grep -q ":8888 "; then
-        print_success "端口8888正在监听"
+    if command -v ss >/dev/null 2>&1; then
+        if ss -tlnp 2>/dev/null | grep -q ":8888 "; then
+            print_success "端口8888正在监听"
+        else
+            print_warning "端口8888未监听"
+        fi
+    elif command -v netstat >/dev/null 2>&1; then
+        if netstat -tlnp 2>/dev/null | grep -q ":8888 "; then
+            print_success "端口8888正在监听"
+        else
+            print_warning "端口8888未监听"
+        fi
     else
-        print_warning "端口8888未监听"
+        print_warning "无法检查端口状态"
     fi
     
     # 测试HTTP访问
