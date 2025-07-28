@@ -11,6 +11,8 @@ def inject_groups(config, node_names: list) -> tuple:
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {msg}\n")
 
+    write_log(f"🔍 [zc] 开始注入策略组，共 {len(node_names)} 个节点名称")
+
     def is_valid_name(name: str) -> bool:
         # 允许中文、字母、数字、下划线、连字符和点号
         return bool(re.match(r'^[\u4e00-\u9fa5a-zA-Z0-9_\-\.]+$', name))
@@ -18,13 +20,17 @@ def inject_groups(config, node_names: list) -> tuple:
     # ✅ 节点名称合法性校验
     valid_names = []
     skipped = 0
-    for name in node_names:
+    write_log("🔍 [zc] 开始验证节点名称...")
+    for i, name in enumerate(node_names):
         name = name.strip()
         if is_valid_name(name):
             valid_names.append(name)
+            write_log(f"✅ [zc] 节点名称有效: {name}")
         else:
             skipped += 1
             write_log(f"⚠️ [zc] 非法节点名已跳过：{name}")
+
+    write_log(f"✅ [zc] 节点名称验证完成，有效 {len(valid_names)} 个，跳过 {skipped} 个")
 
     proxy_groups = config.get("proxy-groups", [])
     
@@ -36,9 +42,14 @@ def inject_groups(config, node_names: list) -> tuple:
     injected_groups = 0
     skipped_groups = 0
 
+    write_log(f"🔍 [zc] 开始处理策略组，共 {len(proxy_groups)} 个策略组")
+
     # 🔄 修改：遍历所有策略组，而不是固定的策略组名称
-    for group in proxy_groups:
+    for i, group in enumerate(proxy_groups):
         group_name = group.get("name", "")
+        group_type = group.get("type", "")
+        
+        write_log(f"🔍 [zc] 处理策略组 {i+1}/{len(proxy_groups)}: {group_name} (类型: {group_type})")
         
         # 跳过一些特殊策略组（可选）
         skip_groups = ["DIRECT", "REJECT", "GLOBAL", "Proxy", "Final"]
@@ -48,7 +59,6 @@ def inject_groups(config, node_names: list) -> tuple:
             continue
 
         # 检查策略组类型，只处理需要代理的策略组
-        group_type = group.get("type", "")
         if group_type in ["select", "url-test", "fallback", "load-balance"]:
             # 过滤掉可能导致循环引用的节点名称
             safe_names = [name for name in valid_names if name != group_name]

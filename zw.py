@@ -23,21 +23,27 @@ def load_config(path: str):
         return {}
 
 def is_valid_name(name: str) -> bool:
-    # 只允许英文字母、数字、下划线、短横线、点，不允许其他字符
-    return bool(re.match(r'^[\w\-\.]+$', name))
+    # 允许中文、字母、数字、下划线、连字符和点号，与zc.py保持一致
+    return bool(re.match(r'^[\u4e00-\u9fa5a-zA-Z0-9_\-\.]+$', name))
 
 def inject_proxies(config, nodes: list) -> tuple:
+    write_log(f"🔍 [zw] 开始注入代理节点，共 {len(nodes)} 个节点")
+    
     if "proxies" not in config or not isinstance(config["proxies"], list):
         config["proxies"] = []
+        write_log("🔧 [zw] 初始化proxies列表")
 
     # 🔄 修改：完全替换模式，不再检查重复
     new_nodes = []
     injected = 0
     skipped_invalid = 0
 
-    for node in nodes:
+    for i, node in enumerate(nodes):
         node = copy.deepcopy(node)
         name = node.get("name", "").strip()
+        node_type = node.get("type", "unknown")
+
+        write_log(f"🔍 [zw] 处理节点 {i+1}/{len(nodes)}: {name} ({node_type})")
 
         if not is_valid_name(name):
             skipped_invalid += 1
@@ -46,9 +52,13 @@ def inject_proxies(config, nodes: list) -> tuple:
 
         new_nodes.append(node)
         injected += 1
+        write_log(f"✅ [zw] 节点 {name} 已添加")
 
+    write_log(f"🔍 [zw] 开始替换proxies列表...")
     # 🔄 修改：直接替换而不是追加
     config["proxies"] = new_nodes
+    write_log(f"✅ [zw] proxies列表已更新，共 {injected} 个有效节点，跳过 {skipped_invalid} 个无效节点")
+    
     return config, injected, skipped_invalid, 0
 
 def main():

@@ -28,6 +28,7 @@ LAST_HASH=""
 log "✅ OpenClash 节点同步守护已启动..."
 
 # === 主循环 ===
+log "🔄 开始监控节点文件变化..."
 while true; do
   if [ ! -f "$NODES_FILE" ]; then
     log "⚠️ 文件不存在: $NODES_FILE"
@@ -42,19 +43,31 @@ while true; do
   fi
 
   CURRENT_HASH=$(md5sum "$NODES_FILE" | awk '{print $1}')
-
+  
   if [ "$CURRENT_HASH" != "$LAST_HASH" ]; then
     log "🔄 检测到节点文件变动，准备执行同步"
+    log "🔍 文件MD5变化: $LAST_HASH -> $CURRENT_HASH"
 
-    cp "$CONFIG_FILE" "$BACKUP_FILE"
+    # 检查备份文件
+    if [ -f "$CONFIG_FILE" ]; then
+      cp "$CONFIG_FILE" "$BACKUP_FILE"
+      log "✅ 已备份原配置文件"
+    else
+      log "⚠️ 原配置文件不存在，跳过备份"
+    fi
 
+    log "🚀 开始执行同步脚本: $SCRIPT_TO_RUN"
     if python3 "$SCRIPT_TO_RUN" >> "$LOG_FILE" 2>&1; then
       log "✅ 同步成功，OpenClash 配置文件已更新"
       LAST_HASH="$CURRENT_HASH"
     else
       log "❌ 同步失败，恢复上次配置并重启 OpenClash"
-      cp "$BACKUP_FILE" "$CONFIG_FILE"
+      if [ -f "$BACKUP_FILE" ]; then
+        cp "$BACKUP_FILE" "$CONFIG_FILE"
+        log "✅ 已恢复备份配置"
+      fi
       /etc/init.d/openclash restart
+      log "🔄 已重启OpenClash服务"
     fi
   fi
 
