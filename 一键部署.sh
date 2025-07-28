@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # GitHub仓库信息
-GITHUB_REPO="your-username/OpenClashManage"
+GITHUB_REPO="kuku0799/OpenClashManage"
 GITHUB_RAW="https://raw.githubusercontent.com/$GITHUB_REPO/main"
 
 print_header() {

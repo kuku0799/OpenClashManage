@@ -8,14 +8,14 @@
 
 ```bash
 # 下载并运行一键部署脚本
-wget -O - https://raw.githubusercontent.com/your-username/OpenClashManage/main/一键部署.sh | sh
+wget -O - https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/一键部署.sh | sh
 ```
 
 ### 方法二：手动安装
 
 ```bash
 # 1. 下载安装脚本
-wget https://raw.githubusercontent.com/your-username/OpenClashManage/main/install_openwrt.sh
+wget https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_openwrt.sh
 
 # 2. 设置执行权限
 chmod +x install_openwrt.sh
@@ -28,7 +28,7 @@ chmod +x install_openwrt.sh
 
 ```bash
 # 一键下载并安装
-curl -sSL https://raw.githubusercontent.com/your-username/OpenClashManage/main/install_openwrt.sh | bash
+curl -sSL https://raw.githubusercontent.com/kuku0799/OpenClashManage/main/install_openwrt.sh | bash
 ```
 
 ## 📋 系统要求
