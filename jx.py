@@ -26,8 +26,9 @@ def clean_name(name: str, existing_names: set) -> str:
         pass
     
     # 移除特殊字符，保留更多有用字符
-    # 保留：中文、字母、数字、下划线、连字符、点号、空格、冒号、斜杠、括号、方括号等
-    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.\s:/\()\[\]]', '', name.strip())
+    # 保留：中文、字母、数字、下划线、连字符、点号、空格、冒号、括号、方括号等
+    # 移除斜杠"/"字符，因为它会导致策略组注入失败
+    name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_\-\.\s:()\[\]]', '', name.strip())
     
     # 清理多余的空格
     name = re.sub(r'\s+', ' ', name).strip()

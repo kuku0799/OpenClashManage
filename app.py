@@ -332,11 +332,22 @@ class OpenClashManager:
     def get_watchdog_status(self):
         """获取守护进程状态"""
         try:
+            # 检查PID文件
             if os.path.exists(PID_FILE):
                 with open(PID_FILE, 'r') as f:
                     pid = f.read().strip()
                 if pid and self.check_process_running(pid):
                     return True, pid
+            
+            # 检查进程是否在运行（备用方法）
+            result = subprocess.run("ps | grep jk.sh | grep -v grep", shell=True, capture_output=True, text=True)
+            if result.returncode == 0 and result.stdout.strip():
+                # 找到进程，提取PID
+                lines = result.stdout.strip().split('\n')
+                if lines:
+                    pid = lines[0].split()[0]
+                    return True, pid
+            
             return False, None
         except Exception as e:
             write_log(f"❌ 获取守护进程状态失败: {e}")
